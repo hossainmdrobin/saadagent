@@ -2,10 +2,12 @@ import { combineSlices, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import { baseApi } from "./base-api";
 import { counterReducer } from "./features/counter-slice";
+import { authReducer } from "./features/auth-slice";
 
 const rootReducer = combineSlices({
   [baseApi.reducerPath]: baseApi.reducer,
   counter: counterReducer,
+  auth: authReducer,
 });
 
 export function makeStore() {
