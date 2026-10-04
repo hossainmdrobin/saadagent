@@ -26,7 +26,7 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 
 export async function findUserById(userId: string): Promise<User | null> {
   await connectToDatabase();
-  return UserModel.findById(userId);
+  return UserModel.findById(userId).select("+passwordHash");
 }
 
 export async function createUser(input: {
@@ -96,6 +96,10 @@ export async function loginWithPassword(input: {
       status: "locked",
       retryAfterSeconds: Math.ceil((user.lockedUntil.getTime() - Date.now()) / 1000),
     };
+  }
+
+  if (!user.passwordHash) {
+    return { status: "invalid" };
   }
 
   const passwordMatches = await verifyPassword(input.password, user.passwordHash);

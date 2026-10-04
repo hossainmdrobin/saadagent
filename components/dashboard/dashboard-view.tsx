@@ -14,6 +14,13 @@ import {
   selectIsInitialized,
 } from "@/store/features/auth-slice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import type { OAuthProviderId } from "@/types/oauth";
+
+const PROVIDER_LABELS: Record<OAuthProviderId, string> = {
+  google: "Google",
+  facebook: "Facebook",
+  github: "GitHub",
+};
 
 export interface DashboardViewProps {
   user: PublicUser;
@@ -113,7 +120,39 @@ export function DashboardView({ user }: DashboardViewProps) {
               </dt>
               <dd className="text-sm text-zinc-900 dark:text-zinc-100">{joinedOn}</dd>
             </div>
+            <div className="flex flex-col gap-1">
+              <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                Password
+              </dt>
+              <dd className="text-sm text-zinc-900 dark:text-zinc-100">
+                {user.hasPassword ? "Set" : "Not set (provider account only)"}
+              </dd>
+            </div>
           </dl>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Connected accounts</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {user.linkedProviders.length > 0 ? (
+            <ul className="flex flex-wrap gap-2">
+              {user.linkedProviders.map((provider) => (
+                <li
+                  key={provider}
+                  className="inline-flex items-center rounded-full border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-700 dark:border-zinc-700 dark:text-zinc-200"
+                >
+                  {PROVIDER_LABELS[provider]}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              No providers linked yet. This account signs in with email and password.
+            </p>
+          )}
         </CardContent>
       </Card>
 

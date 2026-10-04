@@ -9,6 +9,7 @@ import { getServerEnv } from "@/lib/env";
 import type { User } from "@/lib/models/user";
 import { generateSecureToken, hashToken } from "@/lib/auth/tokens";
 import { createSignedValue, readSignedValue } from "@/lib/auth/tokens";
+import type { OAuthProviderId } from "@/types/oauth";
 import {
   SESSION_COOKIE_NAME,
   SESSION_MAX_AGE_SECONDS,
@@ -21,6 +22,9 @@ export interface PublicUser {
   name: string;
   email: string;
   isEmailVerified: boolean;
+  role: string;
+  hasPassword: boolean;
+  linkedProviders: OAuthProviderId[];
   createdAt: string | null;
 }
 
@@ -40,6 +44,9 @@ export function toPublicUser(user: User): PublicUser {
     name: user.name,
     email: user.email,
     isEmailVerified: user.isEmailVerified,
+    role: user.role,
+    hasPassword: Boolean(user.passwordHash),
+    linkedProviders: [...new Set((user.providers ?? []).map((entry) => entry.provider))],
     createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : null,
   };
 }
@@ -154,7 +161,7 @@ export async function getCurrentUser(): Promise<PublicUser | null> {
   }
 
   await connectToDatabase();
-  const user = await UserModel.findById(session.userId);
+  const user = await UserModel.findById(session.userId).select("+passwordHash");
 
   return user ? toPublicUser(user) : null;
 }

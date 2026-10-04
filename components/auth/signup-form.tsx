@@ -9,17 +9,25 @@ import { Alert } from "@/components/ui/alert";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PasswordField } from "@/components/auth/password-field";
+import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 import { useToast } from "@/components/providers/toast-provider";
 import { asApiError, toFieldErrorMap, zodFieldErrorMap } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
+import { getOAuthErrorMessage } from "@/lib/oauth/error-messages";
 import { PASSWORD_REQUIREMENTS, signupFormSchema } from "@/lib/validation/auth";
 import { useSignupMutation } from "@/store/features/auth-api";
 import { setPendingVerificationEmail } from "@/store/features/auth-slice";
 import { useAppDispatch } from "@/store/hooks";
+import type { PublicProviderInfo } from "@/types/oauth";
 
 const initialValues = { name: "", email: "", password: "", confirmPassword: "" };
 
-export function SignupForm() {
+export interface SignupFormProps {
+  providers?: PublicProviderInfo[];
+  oauthError?: string;
+}
+
+export function SignupForm({ providers = [], oauthError }: SignupFormProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { pushToast } = useToast();
@@ -27,6 +35,7 @@ export function SignupForm() {
   const [values, setValues] = useState(initialValues);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const oauthErrorMessage = getOAuthErrorMessage(oauthError);
 
   const metRequirements = useMemo(
     () => [
@@ -78,6 +87,8 @@ export function SignupForm() {
 
   return (
     <form className="flex flex-col gap-5" onSubmit={handleSubmit} noValidate>
+      {oauthErrorMessage ? <Alert variant="error">{oauthErrorMessage}</Alert> : null}
+
       {formError ? <Alert variant="error">{formError}</Alert> : null}
 
       <Field id="name" label="Full name" error={fieldErrors.name}>
@@ -146,6 +157,14 @@ export function SignupForm() {
       <Button type="submit" size="lg" isLoading={isLoading} disabled={isLoading}>
         {isLoading ? "Creating account..." : "Create account"}
       </Button>
+
+      {providers.length > 0 ? (
+        <SocialAuthButtons
+          providers={providers}
+          origin="signup"
+          disabled={isLoading}
+        />
+      ) : null}
 
       <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
         Already have an account?{" "}

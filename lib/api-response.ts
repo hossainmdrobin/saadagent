@@ -78,7 +78,7 @@ export async function readJsonBody(request: Request): Promise<unknown> {
   }
 }
 
-function isDuplicateKeyError(error: unknown): boolean {
+export function isDuplicateKeyError(error: unknown): boolean {
   return (
     typeof error === "object" &&
     error !== null &&

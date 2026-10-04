@@ -18,6 +18,23 @@ const serverEnvSchema = z.object({
   SMTP_FROM: z.string().min(1).default("SaadAgent <no-reply@saadagent.dev>"),
   APP_URL: z.url().default("http://localhost:3000"),
   BCRYPT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12),
+  NEXT_PUBLIC_APP_URL: z.url().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_AUTHORIZE_URL: z.url().optional(),
+  GOOGLE_TOKEN_URL: z.url().optional(),
+  GOOGLE_USERINFO_URL: z.url().optional(),
+  FACEBOOK_CLIENT_ID: z.string().optional(),
+  FACEBOOK_CLIENT_SECRET: z.string().optional(),
+  FACEBOOK_AUTHORIZE_URL: z.url().optional(),
+  FACEBOOK_TOKEN_URL: z.url().optional(),
+  FACEBOOK_USERINFO_URL: z.url().optional(),
+  GITHUB_CLIENT_ID: z.string().optional(),
+  GITHUB_CLIENT_SECRET: z.string().optional(),
+  GITHUB_AUTHORIZE_URL: z.url().optional(),
+  GITHUB_TOKEN_URL: z.url().optional(),
+  GITHUB_USERINFO_URL: z.url().optional(),
+  GITHUB_USER_EMAILS_URL: z.url().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema> & {
