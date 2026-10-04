@@ -9,8 +9,8 @@ export const chatMessageSchema = z
 export const chatModelSchema = z
   .string()
   .trim()
-  .regex(/^[\w.-]+\/[\w.-]+$/, {
-    error: "Use a model id like meta-llama/Llama-3.1-8B-Instruct.",
+  .regex(/^[\w.-]+\/[\w.-]+(:[a-z0-9-]+)?$/, {
+    error: "Use a model id like openai/gpt-oss-120b or meta-llama/Llama-3.1-8B-Instruct:fastest.",
   })
   .max(120, { error: "Model ids are limited to 120 characters." });
 

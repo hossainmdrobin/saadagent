@@ -8,12 +8,7 @@ export interface SendChatMessageRequest {
 export interface ChatResponse {
   reply: string;
   model: string;
-  finishReason: string | null;
-  usage: {
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-  };
+  steps: number;
 }
 
 export const chatApi = baseApi.injectEndpoints({

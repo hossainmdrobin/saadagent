@@ -65,8 +65,10 @@ export function ChatForm({ configured, defaultModel }: ChatFormProps) {
       <CardHeader>
         <CardTitle>Hugging Face chat</CardTitle>
         <CardDescription>
-          Sends the message to the Hugging Face Inference API through
-          <code className="mx-1 font-mono text-xs">POST /api/chat</code>.
+          Runs a{" "}
+          <code className="font-mono text-xs">deepagents</code> agent whose model is
+          served by the Hugging Face Inference Providers router. Calls
+          <code className="ml-1 font-mono text-xs">POST /api/chat</code>.
         </CardDescription>
       </CardHeader>
 
@@ -88,7 +90,7 @@ export function ChatForm({ configured, defaultModel }: ChatFormProps) {
               name="model"
               type="text"
               spellCheck={false}
-              placeholder="meta-llama/Llama-3.1-8B-Instruct"
+              placeholder="openai/gpt-oss-120b:fastest"
               value={values.model}
               invalid={Boolean(fieldErrors.model)}
               onChange={(event) =>
@@ -125,8 +127,8 @@ export function ChatForm({ configured, defaultModel }: ChatFormProps) {
                 {reply.reply}
               </p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                {reply.usage.totalTokens} tokens &middot; finish reason{" "}
-                {reply.finishReason ?? "unknown"}
+                {reply.model} &middot; {reply.steps} agent step
+                {reply.steps === 1 ? "" : "s"}
               </p>
             </div>
           ) : null}
