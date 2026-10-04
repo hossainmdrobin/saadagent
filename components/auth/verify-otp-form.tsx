@@ -22,13 +22,14 @@ import { otpCodeSchema } from "@/lib/validation/auth";
 
 export interface VerifyOtpFormProps {
   emailMasked: string | null;
+  initialCode?: string | null;
 }
 
-export function VerifyOtpForm({ emailMasked }: VerifyOtpFormProps) {
+export function VerifyOtpForm({ emailMasked, initialCode }: VerifyOtpFormProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { pushToast } = useToast();
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(initialCode ?? "");
   const [formError, setFormError] = useState<string | null>(null);
   const [codeIsInvalid, setCodeIsInvalid] = useState(false);
   const { seconds, isCoolingDown, reset } = useCountdown();
@@ -153,6 +154,14 @@ export function VerifyOtpForm({ emailMasked }: VerifyOtpFormProps) {
         </span>
         . It expires in 5 minutes.
       </p>
+
+      {initialCode ? (
+        <Alert variant="info">
+          Development mode: your code was prefilled as{" "}
+          <span className="font-semibold">{initialCode}</span> because SMTP is not
+          configured.
+        </Alert>
+      ) : null}
 
       {formError ? <Alert variant="error">{formError}</Alert> : null}
 

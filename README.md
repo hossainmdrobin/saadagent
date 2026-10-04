@@ -3,6 +3,8 @@
 Next.js 16 (App Router) + TypeScript application with a complete email/password
 authentication system: signup, one-time email verification (OTP), login, logout,
 protected routes, and Redux Toolkit + RTK Query state management on top of MongoDB.
+Google, Facebook, and GitHub sign-in are available on top of the same session,
+verification, and user model.
 
 ## Stack
 
@@ -14,6 +16,7 @@ protected routes, and Redux Toolkit + RTK Query state management on top of Mongo
 | Validation  | Zod (shared between client forms and API routes)     |
 | Email       | Nodemailer (SMTP, with a console fallback in dev)    |
 | Passwords   | bcrypt                                              |
+| Social auth | OAuth 2.0 authorization code + PKCE (no extra SDK)   |
 | Styling     | Tailwind CSS 4                                      |
 
 ## Getting started
@@ -57,6 +60,42 @@ protected routes, and Redux Toolkit + RTK Query state management on top of Mongo
 6. Open <http://localhost:3000>, create an account at `/signup`, and use the
    verification code that is emailed to you.
 
+### Social sign-in
+
+Google, Facebook, and GitHub sign-in work without any additional dependency. Each
+provider is independent and optional:
+
+1. Create an OAuth app with the provider and copy the client id and secret into
+   `.env.local`:
+
+   | Provider | Console                                        | Env vars                            |
+   | -------- | ---------------------------------------------- | ----------------------------------- |
+   | Google   | Google Cloud Console → APIs & Services → Credentials → OAuth client ID | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+   | Facebook | Meta for Developers → Facebook Login → Settings → Client ID/Secret     | `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` |
+   | GitHub   | Settings → Developer settings → OAuth Apps → Generate a new client secret | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` |
+
+2. Register the redirect URI for the app. The callback path is fixed, and the host
+   comes from `APP_URL`:
+
+   ```text
+   {APP_URL}/api/auth/oauth/google/callback
+   {APP_URL}/api/auth/oauth/facebook/callback
+   {APP_URL}/api/auth/oauth/github/callback
+   ```
+
+3. Add the scopes the app requests: `openid email profile` (Google), `email
+   public_profile` (Facebook), and `read:user user:email` (GitHub).
+
+A provider button is shown only once both its client id and secret are present, so
+an unconfigured provider disappears from the screens and its endpoint answers with
+`not_configured`. Endpoint overrides (`GOOGLE_AUTHORIZE_URL`, `GITHUB_USER_EMAILS_URL`,
+and friends) exist in `.env.example` for tests and self-hosted proxies.
+
+Google and GitHub report whether the email they share is verified; Facebook does
+not, so Facebook sign-in always completes through the normal OTP verification step.
+An account is only linked to an existing password account by email when the provider
+confirms that email, which prevents a takeover through an unverified address.
+
 ### Email delivery
 
 If `SMTP_HOST` is set, OTPs are sent through Nodemailer using the `SMTP_*` values.
@@ -78,6 +117,12 @@ provider. In production the code is never returned in a response.
 | `SMTP_SECURE`         | no       | `false`                          | Use TLS on the SMTP connection (port 465)             |
 | `SMTP_USER`/`PASSWORD`| no       | —                                | SMTP credentials                                      |
 | `SMTP_FROM`           | no       | `SaadAgent <no-reply@saadagent.dev>` | Envelope sender address                           |
+| `{PROVIDER}_CLIENT_ID`/`_CLIENT_SECRET` | no | —                    | OAuth client credentials; both required to enable a provider |
+| `{PROVIDER}_AUTHORIZE_URL`/`_TOKEN_URL`/`_USERINFO_URL` | no | provider default | Endpoint overrides for tests and proxies          |
+| `GITHUB_USER_EMAILS_URL` | no     | `https://api.github.com/user/emails` | Verified-email lookup for GitHub                  |
+
+`{PROVIDER}` is `GOOGLE`, `FACEBOOK`, or `GITHUB`. See `.env.example` for the full
+list.
 
 ## Project structure
 
@@ -95,8 +140,11 @@ app/
   api/auth/verify-otp/route.ts POST verify code + create session
   api/auth/resend-otp/route.ts POST issue a new code after the cooldown
   api/auth/otp-status/route.ts GET resend cooldown / verification state
+  api/auth/oauth/[provider]/route.ts            GET start social sign-in
+  api/auth/oauth/[provider]/callback/route.ts    GET handle the provider callback
 components/
   auth/                        Login, signup, OTP, password and countdown widgets
+  auth/social-auth-buttons.tsx Provider buttons and inline OAuth error notices
   dashboard/dashboard-view.tsx Client dashboard with sign out
   providers/toast-provider.tsx Toast notifications
   ui/                          Button, input, field, card, alert, spinner
@@ -107,11 +155,16 @@ lib/
   auth/otp.ts                  OTP generation, HMAC hashing, verification
   auth/service.ts              Signup / login / verification workflows
   auth/session.ts              Session creation, reads, revocation, cookies
+  auth/social-auth.ts          Provider identity resolution, linking, sign-in
   auth/tokens.ts               Secure random tokens, hashing, HMAC signing
   constants.ts                 Cookie names and auth limits
   db.ts                        Cached Mongoose connection
   env.ts                       Validated server environment
   models/                      Mongoose models: user, session, email-otp
+  oauth/oauth.ts               Authorization URL, code exchange, profile mapping
+  oauth/providers.ts           Provider credentials, scopes, endpoints
+  oauth/state.ts               PKCE verifier/challenge and signed state cookie
+  oauth/error-messages.ts      `oauthError` code to user-facing copy
   rate-limit.ts                Sliding window rate limiter
   validation/auth.ts           Zod schemas shared by forms and API routes
 proxy.ts                       Optimistic route redirects (Next.js Proxy)
@@ -120,6 +173,7 @@ store/
   features/auth-api.ts         Auth endpoints
   features/auth-slice.ts       Current user, status, initialization
 types/api.ts                   API envelope and typed error shapes
+types/oauth.ts                 Provider ids and public provider info
 ```
 
 ## Flow
@@ -142,6 +196,15 @@ types/api.ts                   API envelope and typed error shapes
 5. **Logout** (`POST /api/auth/logout`) deletes the stored session and expires the
    cookie, so the token is revoked server-side rather than just cleared in the
    browser.
+6. **Social sign-in** (`GET /api/auth/oauth/{provider}` then
+   `GET /api/auth/oauth/{provider}/callback`) redirects to the provider with PKCE
+   (`S256`) and a signed state. The callback exchanges the code, maps the provider
+   profile, then resolves the user: an already-linked identity signs in, an
+   unverified email claiming an existing account is refused, a verified email that
+   matches an existing account links the provider to it, and a new address creates
+   a password-less user. Accounts without a verified provider email are sent through
+   the same OTP verification as a signup. The session cookie is unchanged, so
+   `saad_session` is issued exactly as it is for a password login.
 
 ## Security notes
 
@@ -161,16 +224,26 @@ types/api.ts                   API envelope and typed error shapes
   `Retry-After` and `X-RateLimit-*` headers.
 - Login responses are generic (`Email or password is incorrect`) to avoid account
   enumeration, and no tokens are ever written to `localStorage`.
+- Social sign-in uses the authorization code flow with PKCE, so the client secret
+  stays server-side and the code cannot be replayed without the stored verifier.
+- The OAuth state payload is HMAC signed, stored in an HttpOnly cookie, limited to
+  10 minutes, and checked against the returned `state` before any code is exchanged.
+  The post-login destination is sanitized, so it cannot be used as an open redirect.
+- A provider email only links to an existing account when the provider asserts it is
+  verified. Facebook shares no such claim, so Facebook sign-in always requires email
+  verification first.
+- `providers.provider` + `providers.providerAccountId` carry a unique index, so one
+  provider identity can never be attached to two accounts.
 
 ### Production checklist
 
 - Set `AUTH_SECRET` (32+ characters) and `MONGODB_URI`.
 - Configure SMTP; unset SMTP in production makes verification impossible.
+- Register `{APP_URL}/api/auth/oauth/{provider}/callback` with every enabled
+  provider, and keep `APP_URL` matching the public HTTPS origin.
 - `proxy.ts` only performs optimistic cookie checks. The dashboard enforces access
   with `requireSession()` on the server, and every API route validates the session
   itself. Keep those server checks if you add routes.
 - The rate limiter is in-memory and per process. Behind more than one instance,
   move `lib/rate-limit.ts` to a shared store such as Redis.
 - Terminate TLS in front of the app so session cookies are only sent over HTTPS.
-
-Google and GitHub sign-in are intentionally not implemented.

@@ -11,13 +11,14 @@ import { maskEmail } from "@/lib/format";
 export default async function VerifyEmailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ email?: string }>;
+  searchParams: Promise<{ email?: string; devOtp?: string }>;
 }) {
-  const { email } = await searchParams;
+  const { email, devOtp } = await searchParams;
   const emailMasked =
     typeof email === "string" && email.includes("@")
       ? maskEmail(email.trim().toLowerCase())
       : null;
+  const initialCode = typeof devOtp === "string" && /^\d{6}$/.test(devOtp) ? devOtp : null;
 
   return (
     <Card>
@@ -28,7 +29,7 @@ export default async function VerifyEmailPage({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <VerifyOtpForm emailMasked={emailMasked} />
+        <VerifyOtpForm emailMasked={emailMasked} initialCode={initialCode} />
       </CardContent>
     </Card>
   );

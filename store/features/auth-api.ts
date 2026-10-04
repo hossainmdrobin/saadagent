@@ -1,10 +1,14 @@
 import { baseApi } from "@/store/base-api";
+import type { OAuthProviderId } from "@/types/oauth";
 
 export interface PublicUser {
   id: string;
   name: string;
   email: string;
   isEmailVerified: boolean;
+  role: string;
+  hasPassword: boolean;
+  linkedProviders: OAuthProviderId[];
   createdAt: string | null;
 }
 
