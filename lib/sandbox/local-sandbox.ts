@@ -13,6 +13,10 @@ export class LocalSandbox implements Sandbox {
     this.workspace = path.resolve(workspace);
   }
 
+  async start(): Promise<void> {
+    // Nothing to start for local sandbox.
+  }
+
   getWorkspace(): string {
     return this.workspace;
   }
@@ -38,5 +42,9 @@ export class LocalSandbox implements Sandbox {
         exitCode: error.code ?? null,
       };
     }
+  }
+
+  async stop(): Promise<void> {
+    // Nothing to clean up for local sandbox.
   }
 }

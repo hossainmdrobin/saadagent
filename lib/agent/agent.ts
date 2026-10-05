@@ -3,6 +3,7 @@ import { ChatOpenAI } from "@langchain/openai";
 // import { writeFileTool } from "./tools";
 import path from "path";
 import { runCommand } from "./exec-tool";
+import { getWorkspaceInfo } from "./workspace-tool";
 
 const model = new ChatOpenAI({
   model: "openai/gpt-oss-120b",
@@ -24,7 +25,7 @@ const backend = new FilesystemBackend({
 export const agent = createDeepAgent({
   model,
   backend,
-  tools:[runCommand],
+  tools:[runCommand,getWorkspaceInfo],
   systemPrompt: `
 You are a coding agent.
 

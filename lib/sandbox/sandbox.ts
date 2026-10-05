@@ -6,6 +6,11 @@ export interface SandboxResult {
 }
 
 export interface Sandbox {
+  start(): Promise<void>;
+
   execute(command: string): Promise<SandboxResult>;
-  getWorkspace():string;
+
+  getWorkspace(): string;
+
+  stop(): Promise<void>;
 }
