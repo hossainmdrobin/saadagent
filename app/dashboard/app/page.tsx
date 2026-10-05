@@ -76,7 +76,7 @@ export default function Home() {
                 ]);
             }
         }
-
+        await loadFiles()
         setLoading(false);
     }
 
@@ -85,6 +85,20 @@ export default function Home() {
             <h1 className="text-2xl font-bold mb-6">
                 SaadAgent
             </h1>
+            <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Ask the coding agent..."
+                className="w-full border rounded p-3 min-h-32"
+            />
+
+            <button
+                onClick={runAgent}
+                disabled={loading}
+                className="mt-3 border rounded px-4 py-2"
+            >
+                {loading ? "Running..." : "Run Agent"}
+            </button>
             <div className="border rounded p-4">
                 <h2 className="font-semibold mb-3">
                     WORKSPACE
@@ -107,21 +121,6 @@ export default function Home() {
                     </div>
                 )}
             </div>
-
-            <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Ask the coding agent..."
-                className="w-full border rounded p-3 min-h-32"
-            />
-
-            <button
-                onClick={runAgent}
-                disabled={loading}
-                className="mt-3 border rounded px-4 py-2"
-            >
-                {loading ? "Running..." : "Run Agent"}
-            </button>
 
             <div className="mt-8 space-y-2 text-red-400">
                 <ChatComponent events={events} />
