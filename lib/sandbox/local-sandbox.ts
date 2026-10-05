@@ -13,6 +13,29 @@ export class LocalSandbox implements Sandbox {
     this.workspace = path.resolve(workspace);
   }
 
+  private resolveCwd(cwd?: string): string {
+    const resolved = path.resolve(
+      this.workspace,
+      cwd ?? "."
+    );
+
+    const relative = path.relative(
+      this.workspace,
+      resolved
+    );
+
+    if (
+      relative.startsWith("..") ||
+      path.isAbsolute(relative)
+    ) {
+      throw new Error(
+        "Working directory is outside the workspace"
+      );
+    }
+
+    return resolved;
+  }
+
   async start(): Promise<void> {
     // Nothing to start for local sandbox.
   }
@@ -21,12 +44,19 @@ export class LocalSandbox implements Sandbox {
     return this.workspace;
   }
 
-  async execute(command: string): Promise<SandboxResult> {
+  async execute(
+    command: string,
+    cwd?: string
+  ): Promise<SandboxResult> {
     try {
-      const { stdout, stderr } = await execAsync(command, {
-        cwd: this.workspace,
-        timeout: 30_000,
-      });
+      const workingDirectory =
+        this.resolveCwd(cwd);
+
+      const { stdout, stderr } =
+        await execAsync(command, {
+          cwd: workingDirectory,
+          timeout: 30_000,
+        });
 
       return {
         success: true,
@@ -38,7 +68,10 @@ export class LocalSandbox implements Sandbox {
       return {
         success: false,
         stdout: error.stdout ?? "",
-        stderr: error.stderr ?? error.message ?? "",
+        stderr:
+          error.stderr ??
+          error.message ??
+          "",
         exitCode: error.code ?? null,
       };
     }

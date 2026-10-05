@@ -8,8 +8,11 @@ const sandbox = new LocalSandbox(
 );
 
 export const runCommand = tool(
-  async ({ command }) => {
-    const result = await sandbox.execute(command);
+  async ({ command, cwd }) => {
+    const result = await sandbox.execute(
+      command,
+      cwd
+    );
 
     return JSON.stringify(result);
   },
@@ -19,6 +22,12 @@ export const runCommand = tool(
       "Execute a command inside the project workspace. Use this for tests, builds, package installation, and inspecting command output.",
     schema: z.object({
       command: z.string(),
+      cwd: z
+        .string()
+        .optional()
+        .describe(
+          "Working directory relative to the project workspace"
+        ),
     }),
   }
 );
