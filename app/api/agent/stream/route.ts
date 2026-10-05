@@ -96,7 +96,17 @@ export async function POST(request: NextRequest) {
 
                 controller.close();
             } catch (error) {
-                controller.error(error);
+                controller.enqueue(
+                    encode({
+                        type: "error",
+                        message:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown agent error",
+                    })
+                );
+
+                controller.close();
             }
         },
     });

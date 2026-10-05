@@ -1,6 +1,6 @@
 import { AgentEvent } from "./page";
 
-export default function ChatComponent(events:AgentEvent[]) {
+export default function ChatComponent({ events }: { events: AgentEvent[] }) {
     return (
         <div className="mt-8 space-y-3">
             {events.map((event, index) => {
@@ -59,6 +59,17 @@ export default function ChatComponent(events:AgentEvent[]) {
                     return (
                         <div key={index} className="text-green-600">
                             ✓ Done
+                        </div>
+                    );
+                }
+
+                if (event.type === "error") {
+                    return (
+                        <div
+                            key={index}
+                            className="border border-red-300 bg-red-50 rounded p-3 text-red-700"
+                        >
+                            ❌ {event.message}
                         </div>
                     );
                 }

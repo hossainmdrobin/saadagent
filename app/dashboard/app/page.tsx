@@ -8,7 +8,8 @@ export type AgentEvent =
     | { type: "tool_call"; tool: string; args: unknown }
     | { type: "tool_result"; tool: string; result: unknown }
     | { type: "message"; content: string }
-    | { type: "done" };
+    | { type: "done" }
+    | {type:"error", message:string}
 
 export default function Home() {
     const [prompt, setPrompt] = useState("");

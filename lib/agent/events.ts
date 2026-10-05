@@ -18,4 +18,8 @@ export type AgentEvent =
     }
     | {
         type: "done";
+    }
+    | {
+        type: "error";
+        message: string;
     };
