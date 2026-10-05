@@ -1,17 +1,27 @@
 import { NextRequest } from "next/server";
+
 import { agent } from "@/lib/agent/agent";
+import { sandbox } from "@/lib/sandbox/sandbox-manager";
 
-export async function POST(request: NextRequest) {
-  const body = await request.json();
+export async function POST(
+  request: NextRequest
+) {
+  await sandbox.start();
 
-  const result = await agent.invoke({
-    messages: [
-      {
-        role: "user",
-        content: body.prompt,
-      },
-    ],
-  });
+  try {
+    const body = await request.json();
 
-  return Response.json(result);
+    const result = await agent.invoke({
+      messages: [
+        {
+          role: "user",
+          content: body.prompt,
+        },
+      ],
+    });
+
+    return Response.json(result);
+  } finally {
+    await sandbox.stop();
+  }
 }

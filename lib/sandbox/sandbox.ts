@@ -8,11 +8,17 @@ export interface SandboxResult {
 export interface Sandbox {
   start(): Promise<void>;
 
-  // execute(command: string): Promise<SandboxResult>;
   execute(
     command: string,
     cwd?: string
   ): Promise<SandboxResult>;
+
+  startProcess(
+    command: string,
+    cwd?: string
+  ): Promise<{
+    pid: number;
+  }>;
 
   getWorkspace(): string;
 

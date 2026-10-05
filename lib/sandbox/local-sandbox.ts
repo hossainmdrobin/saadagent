@@ -1,6 +1,7 @@
 import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
+import { spawn } from "child_process";
 
 import type { Sandbox, SandboxResult } from "./sandbox";
 
@@ -35,6 +36,27 @@ export class LocalSandbox implements Sandbox {
 
     return resolved;
   }
+
+  startProcess(
+  command: string,
+  cwd?: string
+): Promise<{ pid: number }> {
+  const workingDirectory =
+    this.resolveCwd(cwd);
+
+  const child = spawn(command, {
+    cwd: workingDirectory,
+    shell: true,
+    detached: true,
+    stdio: "ignore",
+  });
+
+  child.unref();
+
+  return Promise.resolve({
+    pid: child.pid!,
+  });
+}
 
   async start(): Promise<void> {
     // Nothing to start for local sandbox.
