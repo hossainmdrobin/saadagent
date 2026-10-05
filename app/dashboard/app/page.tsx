@@ -1,20 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ChatComponent from "./ChatComponent";
+import { AgentEvent } from "./types";
 
-export type AgentEvent =
-    | { type: "thinking" }
-    | { type: "tool_call"; tool: string; args: unknown }
-    | { type: "tool_result"; tool: string; result: unknown }
-    | { type: "message"; content: string }
-    | { type: "done" }
-    | {type:"error", message:string}
 
 export default function Home() {
     const [prompt, setPrompt] = useState("");
     const [events, setEvents] = useState<AgentEvent[]>([]);
     const [loading, setLoading] = useState(false);
+
+    const [files, setFiles] = useState<string[]>([])
+
+    useEffect(() => {
+        loadFiles();
+    }, []);
+
+    async function loadFiles() {
+        const response = await fetch("/api/workspace");
+
+        const data = await response.json();
+
+        setFiles(data.files ?? []);
+    }
 
     async function runAgent() {
         if (!prompt.trim()) return;
@@ -77,6 +85,28 @@ export default function Home() {
             <h1 className="text-2xl font-bold mb-6">
                 SaadAgent
             </h1>
+            <div className="border rounded p-4">
+                <h2 className="font-semibold mb-3">
+                    WORKSPACE
+                </h2>
+
+                {files.length === 0 ? (
+                    <p className="text-gray-500">
+                        No files
+                    </p>
+                ) : (
+                    <div className="space-y-1">
+                        {files.map((file) => (
+                            <div
+                                key={file}
+                                className="text-sm"
+                            >
+                                📄 {file}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
 
             <textarea
                 value={prompt}
