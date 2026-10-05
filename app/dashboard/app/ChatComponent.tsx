@@ -1,4 +1,4 @@
-import { AgentEvent } from "./page";
+import { AgentEvent } from "./types";
 
 export default function ChatComponent({ events }: { events: AgentEvent[] }) {
     return (
