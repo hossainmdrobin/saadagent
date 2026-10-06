@@ -43,6 +43,10 @@ export class LocalSandbox implements Sandbox {
   ): Promise<SandboxProcess> {
     const workingDirectory =
       this.resolveCwd(cwd);
+    console.log("START PROCESS DEBUG:", {
+      workspace: this.workspace,
+      cwd,
+    });
 
     const child = spawn(command, {
       cwd: workingDirectory,
@@ -101,10 +105,17 @@ export class LocalSandbox implements Sandbox {
     command: string,
     cwd?: string
   ): Promise<SandboxResult> {
+    console.log("SANDBOX DEBUG:", {
+      workspace: this.workspace,
+      cwd,
+    });
     try {
       const workingDirectory =
         this.resolveCwd(cwd);
-
+      console.log(
+        "RESOLVED CWD:",
+        workingDirectory
+      );
       const { stdout, stderr } =
         await execAsync(command, {
           cwd: workingDirectory,
