@@ -12,6 +12,15 @@ export default function ChatComponent({ events }: { events: AgentEvent[] }) {
                     );
                 }
 
+
+                {
+                    event.type === "process_output" && (
+                        <pre className="rounded bg-black p-3 text-sm text-white">
+                            {event.data}
+                        </pre>
+                    )
+                }
+
                 if (event.type === "tool_call") {
                     return (
                         <div

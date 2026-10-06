@@ -1,4 +1,7 @@
 import { watchWorkspace } from "@/lib/workspace/watcher";
+import { processManager } from "@/lib/sandbox/process-manager";
+
+
 
 export async function GET() {
   const encoder = new TextEncoder();
@@ -28,6 +31,17 @@ export async function GET() {
       const stopWatching = watchWorkspace((event) => {
         send(event);
       });
+      const stopProcessListener =
+        processManager.subscribe(
+          (pid, stream, data) => {
+            send({
+              type: "process_output",
+              pid,
+              stream,
+              data,
+            });
+          }
+        );
 
       const heartbeat = setInterval(() => {
         send({
@@ -42,6 +56,7 @@ export async function GET() {
 
         clearInterval(heartbeat);
         stopWatching();
+        stopProcessListener()
       };
 
       return cleanup;

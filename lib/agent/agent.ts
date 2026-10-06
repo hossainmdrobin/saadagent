@@ -15,6 +15,7 @@ import { getWorkspaceInfo } from "./workspace-tool";
 //     }
 // });
 import {ChatOllama} from "@langchain/ollama"
+import { startProcess } from "./process-tool";
 const model = new ChatOllama({
   model: "qwen3:1.7b",              // Ensure you've pulled this model via `ollama pull`
   temperature: 0,
@@ -30,7 +31,7 @@ const backend = new FilesystemBackend({
 export const agent = createDeepAgent({
     model,
     backend,
-    tools: [runCommand, getWorkspaceInfo],
+    tools: [runCommand, getWorkspaceInfo, startProcess],
     systemPrompt: `
 You are an autonomous coding agent.
 

@@ -35,6 +35,19 @@ export default function Home() {
             const data = JSON.parse(event.data);
 
             console.log("WORKSPACE EVENT:", data);
+            if (data.type === "process_output") {
+                setEvents((previous) => [
+                    ...previous,
+                    {
+                        type: "process_output",
+                        pid: data.pid,
+                        stream: data.stream,
+                        data: data.data,
+                    },
+                ]);
+
+                return;
+            }
 
             if (
                 data.type === "created" ||

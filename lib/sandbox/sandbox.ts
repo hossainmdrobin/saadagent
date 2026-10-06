@@ -1,3 +1,5 @@
+import type { SandboxProcess } from "./process";
+
 export interface SandboxResult {
   success: boolean;
   stdout: string;
@@ -16,9 +18,7 @@ export interface Sandbox {
   startProcess(
     command: string,
     cwd?: string
-  ): Promise<{
-    pid: number;
-  }>;
+  ): Promise<SandboxProcess>;
 
   getWorkspace(): string;
 

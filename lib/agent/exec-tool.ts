@@ -26,7 +26,7 @@ export const runCommand = tool(
         .string()
         .optional()
         .describe(
-          "Working directory relative to the project workspace"
+          "Working directory relative to the project workspace, for example 'demo' or 'demo/frontend'. Do not use an absolute path."
         ),
     }),
   }

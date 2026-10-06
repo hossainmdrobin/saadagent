@@ -1,8 +1,8 @@
 import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
-import { spawn } from "child_process";
-
+import { spawn, ChildProcess } from "child_process";
+import type { SandboxProcess } from "./process";
 import type { Sandbox, SandboxResult } from "./sandbox";
 
 const execAsync = promisify(exec);
@@ -15,10 +15,9 @@ export class LocalSandbox implements Sandbox {
   }
 
   private resolveCwd(cwd?: string): string {
-    const resolved = path.resolve(
-      this.workspace,
-      cwd ?? "."
-    );
+    const resolved = cwd
+      ? path.resolve(this.workspace, cwd)
+      : this.workspace;
 
     const relative = path.relative(
       this.workspace,
@@ -26,7 +25,8 @@ export class LocalSandbox implements Sandbox {
     );
 
     if (
-      relative.startsWith("..") ||
+      relative === ".." ||
+      relative.startsWith(`..${path.sep}`) ||
       path.isAbsolute(relative)
     ) {
       throw new Error(
@@ -38,25 +38,56 @@ export class LocalSandbox implements Sandbox {
   }
 
   startProcess(
-  command: string,
-  cwd?: string
-): Promise<{ pid: number }> {
-  const workingDirectory =
-    this.resolveCwd(cwd);
+    command: string,
+    cwd?: string
+  ): Promise<SandboxProcess> {
+    const workingDirectory =
+      this.resolveCwd(cwd);
 
-  const child = spawn(command, {
-    cwd: workingDirectory,
-    shell: true,
-    detached: true,
-    stdio: "ignore",
-  });
+    const child = spawn(command, {
+      cwd: workingDirectory,
+      shell: true,
+      detached: true,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
 
-  child.unref();
+    const pid = child.pid;
 
-  return Promise.resolve({
-    pid: child.pid!,
-  });
-}
+    if (!pid) {
+      throw new Error(
+        "Failed to start process"
+      );
+    }
+
+    return Promise.resolve({
+      pid,
+
+      onStdout(callback) {
+        child.stdout?.on("data", (data) => {
+          callback(data.toString());
+        });
+      },
+
+      onStderr(callback) {
+        child.stderr?.on("data", (data) => {
+          callback(data.toString());
+        });
+      },
+
+      async stop() {
+        if (process.platform === "win32") {
+          spawn("taskkill", [
+            "/pid",
+            String(pid),
+            "/T",
+            "/F",
+          ]);
+        } else {
+          process.kill(-pid, "SIGTERM");
+        }
+      },
+    });
+  }
 
   async start(): Promise<void> {
     // Nothing to start for local sandbox.
