@@ -14,11 +14,11 @@ import { getWorkspaceInfo } from "./workspace-tool";
 //         baseURL: process.env.HUGGINGFACE_BASE_URL?.trim()
 //     }
 // });
-import {ChatOllama} from "@langchain/ollama"
+import { ChatOllama } from "@langchain/ollama"
 import { startProcess } from "./process-tool";
 const model = new ChatOllama({
-  model: "qwen3:1.7b",              // Ensure you've pulled this model via `ollama pull`
-  temperature: 0,
+    model: "qwen3:1.7b",              // Ensure you've pulled this model via `ollama pull`
+    temperature: 0,
 });
 
 const workspace = path.join(process.cwd(), "workspace");
@@ -68,6 +68,11 @@ Use run_command for:
 - builds
 - scripts
 - checking command output
+
+For run_command and start_process:
+- cwd must always be relative to the workspace.
+- Use "demo", not "C:\\projects\\saadagent\\workspace\\demo".
+- Never use an absolute filesystem path as cwd.
 
 When a command fails, do not immediately give up.
 Analyze the error and attempt to fix it.

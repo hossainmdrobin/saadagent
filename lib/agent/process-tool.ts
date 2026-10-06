@@ -1,5 +1,6 @@
 import { tool } from "langchain";
 import { z } from "zod";
+
 import { processManager } from "@/lib/sandbox/process-manager";
 import { sandbox } from "@/lib/sandbox/sandbox-manager";
 
@@ -11,27 +12,45 @@ export const startProcess = tool(
 
       processManager.add(runningProcess);
 
-      return JSON.stringify({
-        success: true,
-        pid: runningProcess.pid,
-      });
+      return [
+        "success: true",
+        `pid: ${runningProcess.pid}`,
+        `command: ${command}`,
+      ].join("\n");
     } catch (error) {
-      return JSON.stringify({
-        success: false,
-        error:
+      return [
+        "success: false",
+        `error: ${
           error instanceof Error
             ? error.message
-            : "Failed to start process",
-      });
+            : String(error)
+        }`,
+      ].join("\n");
     }
   },
   {
     name: "start_process",
-    description:
-      "Start a long-running process inside the project workspace.",
+
+    description: `
+Start a long-running process inside the project workspace.
+
+Use this for:
+- development servers
+- preview servers
+- processes that must continue running
+
+The cwd must be relative to the workspace.
+`,
+
     schema: z.object({
       command: z.string(),
-      cwd: z.string().optional(),
+
+      cwd: z
+        .string()
+        .optional()
+        .describe(
+          "Workspace-relative directory such as 'demo' or '/demo'. Never use an absolute Windows path."
+        ),
     }),
   }
 );

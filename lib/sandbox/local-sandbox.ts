@@ -15,27 +15,43 @@ export class LocalSandbox implements Sandbox {
   }
 
   private resolveCwd(cwd?: string): string {
-    const resolved = cwd
-      ? path.resolve(this.workspace, cwd)
-      : this.workspace;
-
-    const relative = path.relative(
-      this.workspace,
-      resolved
-    );
-
-    if (
-      relative === ".." ||
-      relative.startsWith(`..${path.sep}`) ||
-      path.isAbsolute(relative)
-    ) {
-      throw new Error(
-        "Working directory is outside the workspace"
-      );
-    }
-
-    return resolved;
+  if (!cwd) {
+    return this.workspace;
   }
+
+  // DeepAgent may send "/demo".
+  // Treat it as "/workspace/demo".
+  const cleaned = cwd.replace(/^[/\\]+/, "");
+
+  // Reject real absolute Windows paths.
+  if (/^[A-Za-z]:[\\/]/.test(cleaned)) {
+    throw new Error(
+      "Working directory must be relative to the workspace"
+    );
+  }
+
+  const resolved = path.resolve(
+    this.workspace,
+    cleaned
+  );
+
+  const relative = path.relative(
+    this.workspace,
+    resolved
+  );
+
+  if (
+    relative === ".." ||
+    relative.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relative)
+  ) {
+    throw new Error(
+      "Working directory is outside the workspace"
+    );
+  }
+
+  return resolved;
+}
 
   startProcess(
     command: string,
