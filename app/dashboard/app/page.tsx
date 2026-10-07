@@ -3,10 +3,13 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import {
   LoaderCircle,
+  PanelsTopLeft,
   PanelLeft,
   PanelRight,
   Play,
   Sparkles,
+  SquareCode,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useToast } from "@/components/providers/toast-provider";
@@ -43,6 +46,36 @@ function createEntry(
   };
 }
 
+function PanelToggle({
+  icon: Icon,
+  label,
+  active,
+  onToggle,
+}: {
+  icon: LucideIcon;
+  label: string;
+  active: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      title={`Toggle ${label.toLowerCase()} panel`}
+      aria-label={`Toggle ${label.toLowerCase()} panel`}
+      aria-pressed={active}
+      className={cn(
+        "rounded-md p-1.5 transition-colors",
+        active
+          ? "bg-white/10 text-sky-400"
+          : "text-zinc-500 hover:bg-white/5 hover:text-zinc-300",
+      )}
+    >
+      <Icon className="size-4" />
+    </button>
+  );
+}
+
 export default function Home() {
   const { pushToast } = useToast();
 
@@ -59,6 +92,7 @@ export default function Home() {
   const [entries, setEntries] = useState<ConsoleEntry[]>([]);
   const [connected, setConnected] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [editorOpen, setEditorOpen] = useState(true);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [tab, setTab] = useState<PreviewTab>("preview");
   const [previewPath, setPreviewPath] = useState<string | null>(null);
@@ -490,25 +524,28 @@ export default function Home() {
             {connected ? "Live" : "Offline"}
           </span>
 
-          <button
-            type="button"
-            onClick={() => setSidebarOpen((previous) => !previous)}
-            title="Toggle explorer"
-            aria-label="Toggle explorer"
-            className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-white/5 hover:text-white lg:hidden"
-          >
-            <PanelLeft className="size-4" />
-          </button>
+          <div className="flex items-center gap-0.5 rounded-lg border border-white/10 bg-white/[0.03] p-0.5">
+            <PanelToggle
+              icon={PanelLeft}
+              label="Explorer"
+              active={sidebarOpen}
+              onToggle={() => setSidebarOpen((previous) => !previous)}
+            />
 
-          <button
-            type="button"
-            onClick={() => setPreviewOpen((previous) => !previous)}
-            title="Toggle preview"
-            aria-label="Toggle preview"
-            className="rounded-md p-2 text-zinc-400 transition-colors hover:bg-white/5 hover:text-white lg:hidden"
-          >
-            <PanelRight className="size-4" />
-          </button>
+            <PanelToggle
+              icon={SquareCode}
+              label="Editor"
+              active={editorOpen}
+              onToggle={() => setEditorOpen((previous) => !previous)}
+            />
+
+            <PanelToggle
+              icon={PanelRight}
+              label="Preview"
+              active={previewOpen}
+              onToggle={() => setPreviewOpen((previous) => !previous)}
+            />
+          </div>
         </div>
       </header>
 
@@ -522,8 +559,15 @@ export default function Home() {
 
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-white/10 bg-[#0d1320] transition-transform duration-200 lg:static lg:w-60 lg:translate-x-0 lg:transition-none",
-            sidebarOpen ? "translate-x-0" : "-translate-x-full lg:hidden",
+            "fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-white/10 bg-[#0d1320] transition-transform duration-200 lg:static lg:translate-x-0 lg:transition-none",
+            sidebarOpen
+              ? cn(
+                  "translate-x-0",
+                  editorOpen
+                    ? "lg:w-60 lg:flex-none"
+                    : "lg:w-auto lg:flex-1",
+                )
+              : "-translate-x-full lg:hidden",
           )}
         >
           <FileExplorer
@@ -541,7 +585,12 @@ export default function Home() {
           />
         </aside>
 
-        <main className="flex min-w-0 flex-1 flex-col bg-[#0b0f17]">
+        <main
+          className={cn(
+            "min-w-0 flex-col bg-[#0b0f17]",
+            editorOpen ? "flex flex-1" : "hidden",
+          )}
+        >
           <CodeEditor
             openPaths={openPaths}
             activePath={activePath}
@@ -566,8 +615,15 @@ export default function Home() {
 
         <aside
           className={cn(
-            "fixed inset-y-0 right-0 z-40 flex w-[420px] max-w-full flex-col border-l border-white/10 bg-[#0d1320] transition-transform duration-200 lg:static lg:w-[380px] lg:translate-x-0 lg:transition-none",
-            previewOpen ? "translate-x-0" : "translate-x-full lg:hidden",
+            "fixed inset-y-0 right-0 z-40 flex w-[420px] max-w-full flex-col border-l border-white/10 bg-[#0d1320] transition-transform duration-200 lg:static lg:translate-x-0 lg:transition-none",
+            previewOpen
+              ? cn(
+                  "translate-x-0",
+                  editorOpen
+                    ? "lg:w-[380px] lg:flex-none"
+                    : "lg:w-auto lg:flex-1",
+                )
+              : "translate-x-full lg:hidden",
           )}
         >
           <PreviewPane
@@ -581,6 +637,52 @@ export default function Home() {
             onClearConsole={() => setEntries([])}
           />
         </aside>
+
+        {!sidebarOpen && !editorOpen && !previewOpen && (
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+            <div className="flex size-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03]">
+              <PanelsTopLeft className="size-6 text-zinc-600" />
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-zinc-300">
+                All panels are hidden
+              </p>
+              <p className="mt-1 text-xs text-zinc-500">
+                Enable a panel from the header to continue working.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(true)}
+                className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-white/5"
+              >
+                <PanelLeft className="size-3.5" />
+                Explorer
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEditorOpen(true)}
+                className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-white/5"
+              >
+                <SquareCode className="size-3.5" />
+                Editor
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(true)}
+                className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-white/5"
+              >
+                <PanelRight className="size-3.5" />
+                Preview
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

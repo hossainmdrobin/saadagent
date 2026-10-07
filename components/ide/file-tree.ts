@@ -73,6 +73,73 @@ export function getDirectoryPath(path: string): string | null {
   return segments.length > 0 ? segments.join("/") : null;
 }
 
+export type FileTableColumnId = "name" | "type" | "path";
+
+export interface FileTableColumn {
+  id: FileTableColumnId;
+  label: string;
+}
+
+export const FILE_TABLE_COLUMNS: FileTableColumn[] = [
+  { id: "name", label: "Name" },
+  { id: "type", label: "Type" },
+  { id: "path", label: "Path" },
+];
+
+export type ColumnVisibility = Record<FileTableColumnId, boolean>;
+
+export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
+  name: true,
+  type: true,
+  path: true,
+};
+
+export interface FlatNode {
+  node: FileNode;
+  depth: number;
+}
+
+export function flattenTree(nodes: FileNode[]): FlatNode[] {
+  const result: FlatNode[] = [];
+
+  const walk = (level: FileNode[], depth: number) => {
+    for (const node of level) {
+      result.push({ node, depth });
+
+      if (node.type === "directory") {
+        walk(node.children, depth + 1);
+      }
+    }
+  };
+
+  walk(nodes, 0);
+
+  return result;
+}
+
+export function getFileType(path: string, isDirectory: boolean): string {
+  if (isDirectory) {
+    return "Folder";
+  }
+
+  const labels: Record<Language, string> = {
+    javascript: "JavaScript",
+    typescript: "TypeScript",
+    json: "JSON",
+    css: "CSS",
+    html: "HTML",
+    markdown: "Markdown",
+    plaintext: "File",
+  };
+
+  return labels[getLanguage(path)];
+}
+
+export function getParentPath(path: string): string {
+  const directory = getDirectoryPath(path);
+  return directory ?? "workspace";
+}
+
 export type Language =
   | "javascript"
   | "typescript"
