@@ -50,7 +50,7 @@ export async function GET(request: Request) {
       });
 
       // Process stdout/stderr
-      stopProcessListener =
+      stopProcessListener =     // PEOCESS MANEGER: WHAT DOES IT DO ?
         processManager.subscribe(
           (pid, stream, data) => {
             send({
