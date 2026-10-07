@@ -1,14 +1,32 @@
 import { watchWorkspace } from "@/lib/workspace/watcher";
 import { processManager } from "@/lib/sandbox/process-manager";
 
-
-
-export async function GET() {
+export async function GET(request: Request) {
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     start(controller) {
       let closed = false;
+      let stopWatching = () => {};
+      let stopProcessListener = () => {};
+      let heartbeat: ReturnType<typeof setInterval> | undefined;
+
+      const close = () => {
+        if (closed) return;
+
+        closed = true;
+
+        if (heartbeat) {
+          clearInterval(heartbeat);
+        }
+
+        stopWatching();
+        stopProcessListener();
+
+        try {
+          controller.close();
+        } catch {}
+      };
 
       const send = (data: unknown) => {
         if (closed) return;
@@ -20,18 +38,19 @@ export async function GET() {
             )
           );
         } catch {
-          closed = true;
+          close();
         }
       };
 
-      send({
-        type: "connected",
-      });
+      send({ type: "connected" });
 
-      const stopWatching = watchWorkspace((event) => {
+      // File changes
+      stopWatching = watchWorkspace((event) => {
         send(event);
       });
-      const stopProcessListener =
+
+      // Process stdout/stderr
+      stopProcessListener =
         processManager.subscribe(
           (pid, stream, data) => {
             send({
@@ -43,23 +62,14 @@ export async function GET() {
           }
         );
 
-      const heartbeat = setInterval(() => {
-        send({
-          type: "heartbeat",
-        });
+      heartbeat = setInterval(() => {
+        send({ type: "heartbeat" });
       }, 30_000);
 
-      const cleanup = () => {
-        if (closed) return;
-
-        closed = true;
-
-        clearInterval(heartbeat);
-        stopWatching();
-        stopProcessListener()
-      };
-
-      return cleanup;
+      request.signal.addEventListener(
+        "abort",
+        close
+      );
     },
   });
 

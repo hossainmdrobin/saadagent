@@ -1,3 +1,4 @@
+// FRONTEND EVENT
 export type AgentEvent =
     | { type: "thinking" }
     | { type: "tool_call"; tool: string; args: unknown }
