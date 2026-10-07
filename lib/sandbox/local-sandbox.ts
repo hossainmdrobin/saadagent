@@ -15,71 +15,64 @@ export class LocalSandbox implements Sandbox {
   }
 
   private resolveCwd(cwd?: string): string {
-  if (!cwd) {
-    return this.workspace;
-  }
+    if (!cwd) {
+      return this.workspace;
+    }
 
-  // DeepAgent may send "/demo".
-  // Treat it as "/workspace/demo".
-  const cleaned = cwd.replace(/^[/\\]+/, "");
+    // DeepAgent may send "/demo".
+    // Treat it as "/workspace/demo".
+    const cleaned = cwd.replace(/^[/\\]+/, "");
 
-  // Reject real absolute Windows paths.
-  if (/^[A-Za-z]:[\\/]/.test(cleaned)) {
-    throw new Error(
-      "Working directory must be relative to the workspace"
+    // Reject real absolute Windows paths.
+    if (/^[A-Za-z]:[\\/]/.test(cleaned)) {
+      throw new Error(
+        "Working directory must be relative to the workspace"
+      );
+    }
+
+    const resolved = path.resolve(
+      this.workspace,
+      cleaned
     );
-  }
 
-  const resolved = path.resolve(
-    this.workspace,
-    cleaned
-  );
-
-  const relative = path.relative(
-    this.workspace,
-    resolved
-  );
-
-  if (
-    relative === ".." ||
-    relative.startsWith(`..${path.sep}`) ||
-    path.isAbsolute(relative)
-  ) {
-    throw new Error(
-      "Working directory is outside the workspace"
+    const relative = path.relative(
+      this.workspace,
+      resolved
     );
+
+    if (
+      relative === ".." ||
+      relative.startsWith(`..${path.sep}`) ||
+      path.isAbsolute(relative)
+    ) {
+      throw new Error(
+        "Working directory is outside the workspace"
+      );
+    }
+
+    return resolved;
   }
 
-  return resolved;
-}
-
-  startProcess(
+  async startProcess(
     command: string,
     cwd?: string
   ): Promise<SandboxProcess> {
-    const workingDirectory =
-      this.resolveCwd(cwd);
-    console.log("START PROCESS DEBUG:", {
-      workspace: this.workspace,
-      cwd,
-    });
+    const workingDirectory = this.resolveCwd(cwd);
 
     const child = spawn(command, {
       cwd: workingDirectory,
       shell: true,
-      detached: true,
+      windowsHide: true,
       stdio: ["ignore", "pipe", "pipe"],
     });
 
     const pid = child.pid;
 
     if (!pid) {
-      throw new Error(
-        "Failed to start process"
-      );
+      throw new Error("Failed to start process");
     }
 
-    return Promise.resolve({
+    return {
       pid,
 
       onStdout(callback) {
@@ -103,10 +96,10 @@ export class LocalSandbox implements Sandbox {
             "/F",
           ]);
         } else {
-          process.kill(-pid, "SIGTERM");
+          process.kill(pid, "SIGTERM");
         }
       },
-    });
+    };
   }
 
   async start(): Promise<void> {

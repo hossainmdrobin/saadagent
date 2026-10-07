@@ -18,6 +18,9 @@ export default function Home() {
     // EDITING FILE STATE
     const [saving, setSaving] = useState(false);
 
+    // TERMINAL OUTPUT
+    const [terminalOutput, setTerminalOutput] = useState<string[]>([]);
+
     // USE REF
     const selectedFileRef = useRef<string | null>(null);
 
@@ -36,15 +39,7 @@ export default function Home() {
 
             console.log("WORKSPACE EVENT:", data);
             if (data.type === "process_output") {
-                setEvents((previous) => [
-                    ...previous,
-                    {
-                        type: "process_output",
-                        pid: data.pid,
-                        stream: data.stream,
-                        data: data.data,
-                    },
-                ]);
+                setTerminalOutput((previous) => [...previous, data.data]);
 
                 return;
             }
@@ -136,6 +131,7 @@ export default function Home() {
     }
 
     async function runAgent() {
+        setTerminalOutput([]);
         if (!prompt.trim()) return;
 
         setLoading(true);
@@ -262,6 +258,17 @@ export default function Home() {
 
             <div className="mt-8 space-y-2 text-red-400">
                 <ChatComponent events={events} />
+                <div className="rounded-lg bg-black p-4">
+                    <div className="mb-3 text-sm text-gray-400">
+                        Terminal
+                    </div>
+
+                    <pre className="min-h-[200px] whitespace-pre-wrap text-sm text-white">
+                        {terminalOutput.length > 0
+                            ? terminalOutput.join("")
+                            : "No output yet..."}
+                    </pre>
+                </div>
             </div>
         </main>
     );
