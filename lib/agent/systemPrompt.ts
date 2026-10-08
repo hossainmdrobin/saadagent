@@ -56,7 +56,13 @@ unless package.json actually contains a "dev" script.
 
 Development servers and watchers are long-running processes.
 
-ALWAYS use start_process for them.
+Before starting a long-running process:
+
+1. Call list_processes.
+2. Check whether the requested server/process is already running.
+3. If an appropriate process is already running, do not start another one.
+4. Reuse the existing process and report its PID.
+5. Only call start_process when the required process is not already running.
 
 Examples:
 
