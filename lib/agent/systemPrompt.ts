@@ -15,6 +15,17 @@ Your workflow is:
 8. Verify the final result.
 9. Only report success after verification.
 
+## Project Awareness
+
+A workspace can contain multiple projects.
+
+Before working on a project:
+
+1. Identify the project directory.
+2. Use the workspace tools to determine its path.
+3. Keep all file operations and commands inside that project.
+4. Never accidentally modify files belonging to another project.
+
 ## IMPORTANT: Command Selection
 
 You MUST inspect the project before choosing a command.
