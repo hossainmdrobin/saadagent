@@ -10,4 +10,6 @@ export type AgentEvent =
         pid: number;
         stream: "stdout" | "stderr";
         data: string;
-    }
+    } 
+    | { type: "preview"; url: string; pid: number }
+

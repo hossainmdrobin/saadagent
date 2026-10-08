@@ -24,6 +24,9 @@ export default function Home() {
     // PROCESS PRESERVED
     const [processes, setProcesses] = useState<any[]>([]);
 
+    // THE PREVIEW URL
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
     // USE REF
     const selectedFileRef = useRef<string | null>(null);
 
@@ -48,6 +51,10 @@ export default function Home() {
             }
             if (data.type === "processes") {
                 setProcesses(data.processes);
+                return;
+            }
+            if (data.type === "preview") {
+                setPreviewUrl(data.url);
                 return;
             }
 
@@ -264,7 +271,29 @@ export default function Home() {
             )}
 
             <div className="mt-8 space-y-2 text-red-400">
-                <ChatComponent events={events} />
+                <div className="flex">
+                    <ChatComponent events={events} />
+
+                    {previewUrl && (
+                        <div className="rounded-lg border">
+                            <div className="border-b p-3">
+                                <div className="text-sm font-medium">
+                                    Live Preview
+                                </div>
+
+                                <div className="text-xs text-gray-500">
+                                    {previewUrl}
+                                </div>
+                            </div>
+
+                            <iframe
+                                src={previewUrl}
+                                title="Live Preview"
+                                className="h-[600px] w-full"
+                            />
+                        </div>
+                    )}
+                </div>
                 <div className="flex">
                     <div className="rounded-lg bg-black p-4">
                         <div className="mb-3 text-sm text-gray-400">

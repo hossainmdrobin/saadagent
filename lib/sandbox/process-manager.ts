@@ -7,19 +7,24 @@ export type ManagedProcess = {
     startedAt: number;
 };
 
+
 type OutputCallback = (
     pid: number,
     stream: "stdout" | "stderr",
     data: string
 ) => void;
 
+export type PreviewCallback = (
+    pid: number,
+    url: string
+) => void;
+
 class ProcessManager {
     // PRIVATE FUNCTIONS AND VARIABLES
     private processes = new Map<number, ManagedProcess>();
     private listeners = new Set<OutputCallback>();
-    private processListeners = new Set<
-        () => void
-    >();
+    private processListeners = new Set<() => void>();
+    private previewListeners = new Set<PreviewCallback>();
     private notifyProcesses() {
         for (const listener of this.processListeners) {
             listener();
@@ -78,6 +83,14 @@ class ProcessManager {
         };
     }
 
+    subscribePreview(callback: PreviewCallback) {
+        this.previewListeners.add(callback);
+
+        return () => {
+            this.previewListeners.delete(callback);
+        };
+    }
+
     private emit(
         pid: number,
         stream: "stdout" | "stderr",
@@ -91,6 +104,17 @@ class ProcessManager {
 
         for (const listener of this.listeners) {
             listener(pid, stream, data);
+        }
+        const urlMatch = data.match(
+            /https?:\/\/localhost:\d+/
+        );
+
+        if (urlMatch) {
+            const url = urlMatch[0];
+
+            for (const listener of this.previewListeners) {
+                listener(pid, url);
+            }
         }
     }
 

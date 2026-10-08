@@ -4,11 +4,21 @@ import { processManager } from "@/lib/sandbox/process-manager";
 export async function GET(request: Request) {
   let stopProcessListListener:
     (() => void) | undefined;
+  let stopPreviewListener:
+    (() => void) | undefined;
 
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     start(controller) {
+      stopPreviewListener =
+        processManager.subscribePreview((pid, url) => {
+          send({
+            type: "preview",
+            pid,
+            url,
+          });
+        });
       const sendProcesses = () => {
         send({
           type: "processes",
@@ -31,6 +41,7 @@ export async function GET(request: Request) {
         stopProcessListListener?.();
         stopWatching();
         stopProcessListener();
+        stopPreviewListener?.();
 
 
         try {
