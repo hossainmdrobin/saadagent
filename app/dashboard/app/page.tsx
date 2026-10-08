@@ -271,7 +271,7 @@ export default function Home() {
                     }
                     className="rounded border p-2"
                 >
-                    {projects.map((project) => (
+                    {data?.projects.map((project) => (
                         <option key={project.name} value={project.name}>
                             {project.name}
                         </option>

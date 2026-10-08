@@ -1,14 +1,11 @@
 import { projectManager } from "@/lib/workspace/project-manager";
+import { jsonSuccess } from "@/lib/api-response";
 
 export async function GET() {
     try {
         const projects = await projectManager.list();
-        console.log(projects)
 
-        return Response.json({
-            success: true,
-            projects,
-        });
+        return jsonSuccess({ projects });
     } catch (error) {
         return Response.json(
             {
@@ -29,10 +26,7 @@ export async function POST(request: Request) {
 
         const project = await projectManager.create(name);
 
-        return Response.json({
-            success: true,
-            project,
-        });
+        return jsonSuccess({ project });
     } catch (error) {
         return Response.json(
             {
