@@ -5,6 +5,11 @@ import ChatComponent from "./ChatComponent";
 import { AgentEvent } from "./types";
 import { useListProjectsQuery } from "@/store/features/projects-api";
 
+type Project = {
+    name: string;
+    path: string;
+};
+
 
 export default function Home() {
     const [prompt, setPrompt] = useState("");
@@ -28,11 +33,17 @@ export default function Home() {
     // THE PREVIEW URL
     const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
+    // THE PROJECT LIST
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [selectedProject, setSelectedProject] = useState("demo");
+    const [newProjectName, setNewProjectName] = useState("");
+
     // USE REF
     const selectedFileRef = useRef<string | null>(null);
 
     // REDUX HOOKS
-    const {data,isLoading} = useListProjectsQuery()
+    const { data, isLoading,error } = useListProjectsQuery();
+    console.log(data, "sd;foais",error)
 
     useEffect(() => {
         loadFiles();
@@ -246,6 +257,42 @@ export default function Home() {
                         ))}
                     </div>
                 )}
+            </div>
+            <div className="flex flex-wrap items-center gap-3 rounded-lg border p-4">
+                <label htmlFor="project-select" className="font-medium">
+                    Project
+                </label>
+
+                <select
+                    id="project-select"
+                    value={selectedProject}
+                    onChange={(event) =>
+                        setSelectedProject(event.target.value)
+                    }
+                    className="rounded border p-2"
+                >
+                    {projects.map((project) => (
+                        <option key={project.name} value={project.name}>
+                            {project.name}
+                        </option>
+                    ))}
+                </select>
+
+                <input
+                    value={newProjectName}
+                    onChange={(event) =>
+                        setNewProjectName(event.target.value)
+                    }
+                    placeholder="New project name"
+                    className="min-w-0 rounded border p-2"
+                />
+
+                <button
+                    // onClick={createProject}
+                    className="rounded bg-blue-600 px-4 py-2 text-white"
+                >
+                    Create Project
+                </button>
             </div>
             {selectedFile && (
                 <div className="mt-6 border rounded">

@@ -3,6 +3,7 @@ import { projectManager } from "@/lib/workspace/project-manager";
 export async function GET() {
     try {
         const projects = await projectManager.list();
+        console.log(projects)
 
         return Response.json({
             success: true,
