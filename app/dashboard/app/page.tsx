@@ -32,7 +32,7 @@ export default function Home() {
     const selectedFileRef = useRef<string | null>(null);
 
     // REDUX HOOKS
-    const {data,} = useListProjectsQuery()
+    const {data,isLoading} = useListProjectsQuery()
 
     useEffect(() => {
         loadFiles();
