@@ -10,7 +10,11 @@ export const startProcess = tool(
       const runningProcess =
         await sandbox.startProcess(command, cwd);
 
-      processManager.add(runningProcess);
+      processManager.add(
+        runningProcess,
+        command,
+        cwd
+      );
 
       return [
         "success: true",
@@ -20,10 +24,9 @@ export const startProcess = tool(
     } catch (error) {
       return [
         "success: false",
-        `error: ${
-          error instanceof Error
-            ? error.message
-            : String(error)
+        `error: ${error instanceof Error
+          ? error.message
+          : String(error)
         }`,
       ].join("\n");
     }

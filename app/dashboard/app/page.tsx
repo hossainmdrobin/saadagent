@@ -21,6 +21,9 @@ export default function Home() {
     // TERMINAL OUTPUT
     const [terminalOutput, setTerminalOutput] = useState<string[]>([]);
 
+    // PROCESS PRESERVED
+    const [processes, setProcesses] = useState<any[]>([]);
+
     // USE REF
     const selectedFileRef = useRef<string | null>(null);
 
@@ -41,6 +44,10 @@ export default function Home() {
             if (data.type === "process_output") {
                 setTerminalOutput((previous) => [...previous, data.data]);
 
+                return;
+            }
+            if (data.type === "processes") {
+                setProcesses(data.processes);
                 return;
             }
 
@@ -258,16 +265,69 @@ export default function Home() {
 
             <div className="mt-8 space-y-2 text-red-400">
                 <ChatComponent events={events} />
-                <div className="rounded-lg bg-black p-4">
-                    <div className="mb-3 text-sm text-gray-400">
-                        Terminal
+                <div className="flex">
+                    <div className="rounded-lg bg-black p-4">
+                        <div className="mb-3 text-sm text-gray-400">
+                            Terminal
+                        </div>
+
+                        <pre className="min-h-[200px] whitespace-pre-wrap text-sm text-white">
+                            {terminalOutput.length > 0
+                                ? terminalOutput.join("")
+                                : "No output yet..."}
+                        </pre>
+                    </div>
+                    {/* Running Process */}
+                    <div className="rounded-lg border p-4">
+                        <div className="mb-3 font-semibold">
+                            Running Processes
+                        </div>
+
+                        {processes.length === 0 ? (
+                            <div className="text-sm text-gray-500">
+                                No running processes
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {processes.map((process) => (
+                                    <div
+                                        key={process.pid}
+                                        className="flex items-center justify-between rounded bg-gray-100 p-3"
+                                    >
+                                        <div>
+                                            <div className="font-medium">
+                                                {process.command}
+                                            </div>
+
+                                            <div className="text-xs text-gray-500">
+                                                PID: {process.pid} ·{" "}
+                                                {process.cwd ?? "workspace"}
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={async () => {
+                                                await fetch("/api/process/stop", {
+                                                    method: "POST",
+                                                    headers: {
+                                                        "Content-Type":
+                                                            "application/json",
+                                                    },
+                                                    body: JSON.stringify({
+                                                        pid: process.pid,
+                                                    }),
+                                                });
+                                            }}
+                                            className="rounded bg-red-600 px-3 py-1 text-sm text-white"
+                                        >
+                                            Stop
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
-                    <pre className="min-h-[200px] whitespace-pre-wrap text-sm text-white">
-                        {terminalOutput.length > 0
-                            ? terminalOutput.join("")
-                            : "No output yet..."}
-                    </pre>
                 </div>
             </div>
         </main>

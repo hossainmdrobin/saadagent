@@ -2,13 +2,22 @@ import { watchWorkspace } from "@/lib/workspace/watcher";
 import { processManager } from "@/lib/sandbox/process-manager";
 
 export async function GET(request: Request) {
+  let stopProcessListListener:
+    (() => void) | undefined;
+
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     start(controller) {
+      const sendProcesses = () => {
+        send({
+          type: "processes",
+          processes: processManager.list(),
+        });
+      };
       let closed = false;
-      let stopWatching = () => {};
-      let stopProcessListener = () => {};
+      let stopWatching = () => { };
+      let stopProcessListener = () => { };
       let heartbeat: ReturnType<typeof setInterval> | undefined;
 
       const close = () => {
@@ -19,13 +28,14 @@ export async function GET(request: Request) {
         if (heartbeat) {
           clearInterval(heartbeat);
         }
-
+        stopProcessListListener?.();
         stopWatching();
         stopProcessListener();
 
+
         try {
           controller.close();
-        } catch {}
+        } catch { }
       };
 
       const send = (data: unknown) => {
@@ -42,7 +52,17 @@ export async function GET(request: Request) {
         }
       };
 
+
+      stopProcessListListener =
+        processManager.subscribeProcesses(() => {
+          send({
+            type: "processes",
+            processes: processManager.list(),
+          });
+        });
+
       send({ type: "connected" });
+      sendProcesses();
 
       // File changes
       stopWatching = watchWorkspace((event) => {

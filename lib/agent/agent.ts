@@ -16,6 +16,9 @@ import { getWorkspaceInfo } from "./workspace-tool";
 // });
 import { ChatOllama } from "@langchain/ollama"
 import { startProcess } from "./process-tool";
+import { stopProcess } from "./stop-process-tool";
+import { listProcesses } from "./list-process-tool";
+import { prompt } from "./systemPrompt";
 const model = new ChatOllama({
     model: "qwen3:1.7b",              // Ensure you've pulled this model via `ollama pull`
     temperature: 0,
@@ -31,50 +34,12 @@ const backend = new FilesystemBackend({
 export const agent = createDeepAgent({
     model,
     backend,
-    tools: [runCommand, getWorkspaceInfo, startProcess],
-    systemPrompt: `
-You are an autonomous coding agent.
-
-You work inside a project workspace.
-
-Your workflow is:
-
-1. Understand the user's request.
-2. Inspect the existing project before making changes.
-3. Create or modify files using the filesystem tools.
-4. Run the appropriate command to test your changes.
-5. If the command fails:
-   - inspect the error
-   - identify the cause
-   - modify the relevant files
-   - run the command again
-6. Continue until the task works or you have a clear reason you cannot complete it.
-7. Only report success after verification.
-
-Available capabilities:
-
-- Read files
-- Write files
-- Edit files
-- List files
-- Run commands
-- Inspect command output
-
-Use the filesystem tools for file operations.
-
-Use run_command for:
-- npm commands
-- tests
-- builds
-- scripts
-- checking command output
-
-For run_command and start_process:
-- cwd must always be relative to the workspace.
-- Use "demo", not "C:\\projects\\saadagent\\workspace\\demo".
-- Never use an absolute filesystem path as cwd.
-
-When a command fails, do not immediately give up.
-Analyze the error and attempt to fix it.
-`,
+    tools: [
+        runCommand,
+        startProcess,
+        listProcesses,
+        stopProcess,
+        getWorkspaceInfo,
+    ],
+    systemPrompt: prompt,
 });

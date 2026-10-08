@@ -1,5 +1,12 @@
 import type { SandboxProcess } from "./process";
 
+export type ManagedProcess = {
+    process: SandboxProcess;
+    command: string;
+    cwd?: string;
+    startedAt: number;
+};
+
 type OutputCallback = (
     pid: number,
     stream: "stdout" | "stderr",
@@ -7,11 +14,29 @@ type OutputCallback = (
 ) => void;
 
 class ProcessManager {
-    private processes = new Map<number, SandboxProcess>();
+    // PRIVATE FUNCTIONS AND VARIABLES
+    private processes = new Map<number, ManagedProcess>();
     private listeners = new Set<OutputCallback>();
+    private processListeners = new Set<
+        () => void
+    >();
+    private notifyProcesses() {
+        for (const listener of this.processListeners) {
+            listener();
+        }
+    }
 
-    add(process: SandboxProcess) {
-        this.processes.set(process.pid, process);
+    add(
+        process: SandboxProcess,
+        command: string,
+        cwd?: string
+    ) {
+        this.processes.set(process.pid, {
+            process,
+            command,
+            cwd,
+            startedAt: Date.now(),
+        });
 
         process.onStdout((data) => {
             this.emit(process.pid, "stdout", data);
@@ -20,6 +45,22 @@ class ProcessManager {
         process.onStderr((data) => {
             this.emit(process.pid, "stderr", data);
         });
+        this.notifyProcesses()
+    }
+
+    list() {
+        return Array.from(this.processes.values()).map(
+            ({ process, command, cwd, startedAt }) => ({
+                pid: process.pid,
+                command,
+                cwd,
+                startedAt,
+            })
+        );
+    }
+
+    get(pid: number) {
+        return this.processes.get(pid)?.process;
     }
 
     subscribe(callback: OutputCallback) {
@@ -27,6 +68,13 @@ class ProcessManager {
 
         return () => {
             this.listeners.delete(callback);
+        };
+    }
+    subscribeProcesses(callback: () => void) {
+        this.processListeners.add(callback);
+
+        return () => {
+            this.processListeners.delete(callback);
         };
     }
 
@@ -46,18 +94,19 @@ class ProcessManager {
         }
     }
 
-    get(pid: number) {
-        return this.processes.get(pid);
-    }
-
     async stop(pid: number) {
-        const process = this.processes.get(pid);
+        const managed = this.processes.get(pid);
 
-        if (!process) return;
+        if (!managed) {
+            throw new Error(
+                `Process ${pid} not found`
+            );
+        }
 
-        await process.stop();
+        await managed.process.stop();
 
         this.processes.delete(pid);
+        this.notifyProcesses();
     }
 }
 
