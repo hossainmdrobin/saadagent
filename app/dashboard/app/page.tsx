@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import ChatComponent from "./ChatComponent";
 import { AgentEvent } from "./types";
+import { useListProjectsQuery } from "@/store/features/projects-api";
 
 
 export default function Home() {
@@ -29,6 +30,9 @@ export default function Home() {
 
     // USE REF
     const selectedFileRef = useRef<string | null>(null);
+
+    // REDUX HOOKS
+    const {data,} = useListProjectsQuery()
 
     useEffect(() => {
         loadFiles();
