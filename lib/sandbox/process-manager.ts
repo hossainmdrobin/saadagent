@@ -4,6 +4,7 @@ export type ManagedProcess = {
     process: SandboxProcess;
     command: string;
     cwd?: string;
+    project?: string,
     startedAt: number;
 };
 
@@ -34,12 +35,14 @@ class ProcessManager {
     add(
         process: SandboxProcess,
         command: string,
-        cwd?: string
+        cwd?: string,
+        project?:string
     ) {
         this.processes.set(process.pid, {
             process,
             command,
             cwd,
+            project,
             startedAt: Date.now(),
         });
 
@@ -55,10 +58,11 @@ class ProcessManager {
 
     list() {
         return Array.from(this.processes.values()).map(
-            ({ process, command, cwd, startedAt }) => ({
+            ({ process, command, cwd, project, startedAt }) => ({
                 pid: process.pid,
                 command,
                 cwd,
+                project,
                 startedAt,
             })
         );

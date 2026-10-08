@@ -5,7 +5,7 @@ import { processManager } from "@/lib/sandbox/process-manager";
 import { sandbox } from "@/lib/sandbox/sandbox-manager";
 
 export const startProcess = tool(
-  async ({ command, cwd }) => {
+  async ({ command, cwd, project }) => {
     try {
       const runningProcess =
         await sandbox.startProcess(command, cwd);
@@ -13,13 +13,15 @@ export const startProcess = tool(
       processManager.add(
         runningProcess,
         command,
-        cwd
+        cwd,
+        project
       );
 
       return [
         "success: true",
         `pid: ${runningProcess.pid}`,
         `command: ${command}`,
+        `project:${project ?? "unknown"}`
       ].join("\n");
     } catch (error) {
       return [
@@ -43,6 +45,15 @@ Use this for:
 - processes that must continue running
 
 The cwd must be relative to the workspace.
+
+When starting a process for a known project,
+provide the project name.
+
+Example:
+
+project: "demo"
+cwd: "demo"
+command: "npm start"
 `,
 
     schema: z.object({
@@ -51,9 +62,11 @@ The cwd must be relative to the workspace.
       cwd: z
         .string()
         .optional()
-        .describe(
-          "Workspace-relative directory such as 'demo' or '/demo'. Never use an absolute Windows path."
-        ),
+        .describe("Workspace-relative directory such as 'demo' or '/demo'."),
+      project: z
+        .string()
+        .optional()
+        .describe("Name of the project this process belongs to, such as 'demo'."),
     }),
   }
 );
