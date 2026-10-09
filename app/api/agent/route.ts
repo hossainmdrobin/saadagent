@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { agent } from "@/lib/agent/agent";
+import { createAgentForProject } from "@/lib/agent/agent";
 import { sandbox } from "@/lib/sandbox/sandbox-manager";
 
 export async function POST(
@@ -10,6 +10,7 @@ export async function POST(
 
   try {
     const body = await request.json();
+    const agent = createAgentForProject(body?.project)
 
     const result = await agent.invoke({
       messages: [

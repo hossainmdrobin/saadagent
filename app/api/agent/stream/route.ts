@@ -4,6 +4,10 @@ import { AgentEvent } from "@/lib/agent/events";
 import { AIMessage, BaseMessage } from "@langchain/core/messages";
 import { projectManager } from "@/lib/workspace/project-manager";
 import { workspaceManager } from "@/lib/workspace/workspace-manager";
+import {
+    loadConversation,
+    saveConversation,
+} from "@/lib/agent/conversation-store";
 
 function encode(event: AgentEvent) {
     return new TextEncoder().encode(
@@ -36,13 +40,14 @@ export async function POST(request: NextRequest) {
 
     const projectPath = workspaceManager.getProjectPath(project);
     const agent = createAgentForProject(project);
+    const history = await loadConversation(project);
 
     const stream = await agent.stream(
         {
-            messages: [
-                {
-                    role: "user",
-                    content: `
+            messages: [...history,
+            {
+                role: "user",
+                content: `
                         Selected project: ${project}
                         Project directory: ${projectPath}
 
@@ -54,13 +59,21 @@ export async function POST(request: NextRequest) {
                         - Treat the selected project directory as the root of this project.
                         - Do not modify files in other projects.
                 `.trim(),
-                },
+            },
             ],
         },
         {
             streamMode: "updates",
+            configurable:{
+                thread_id:`project-${project}`
+            }
         }
     );
+    const finalState = await agent.getState({
+        configurable: {
+            thread_id: project,
+        },
+    });
 
     const readable = new ReadableStream({
         async start(controller) {

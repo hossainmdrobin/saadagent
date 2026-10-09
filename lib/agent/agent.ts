@@ -8,7 +8,9 @@
 
 
 import { createDeepAgent, FilesystemBackend } from "deepagents";
+import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 import path from "path";
+import fs from "fs";
 
 import { createRunCommandTool } from "./exec-tool";
 import { createStartProcessTool } from "./process-tool";
@@ -30,6 +32,14 @@ const model = new ChatOpenAI({
     },
 });
 
+const dataDir = path.join(process.cwd(), "data");
+
+fs.mkdirSync(dataDir, { recursive: true });
+
+const checkpointer = SqliteSaver.fromConnString(
+    path.join(dataDir, "saadagent.sqlite")
+);
+
 export function createAgentForProject(projectName: string): ReturnType<typeof createDeepAgent> {
     const projectPath = workspaceManager.getProjectPath(projectName);
     const projectSandbox = createSandboxForProject(projectName);
@@ -42,6 +52,7 @@ export function createAgentForProject(projectName: string): ReturnType<typeof cr
     return createDeepAgent({
         model,
         backend,
+        checkpointer,
         tools: [
             createRunCommandTool(projectSandbox),
             createStartProcessTool(projectSandbox, projectName),
