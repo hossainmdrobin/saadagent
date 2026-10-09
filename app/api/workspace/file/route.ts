@@ -1,13 +1,40 @@
+
 import fs from "fs/promises";
 import path from "path";
 import { NextRequest } from "next/server";
+import { projectManager } from "@/lib/workspace/project-manager";
+import { workspaceManager } from "@/lib/workspace/workspace-manager";
 
-const workspace = path.resolve(
-  process.cwd(),
-  "workspace"
-);
+async function getProjectRoot(project: string | null) {
+  if (
+    !project ||
+    !/^[a-zA-Z0-9_-]+$/.test(project) ||
+    !(await projectManager.exists(project))
+  ) {
+    return null;
+  }
+
+  return workspaceManager.getProjectPath(project);
+}
+
+function resolveProjectFile(projectRoot: string, file: string) {
+  const filePath = path.resolve(projectRoot, file);
+  const relativePath = path.relative(projectRoot, filePath);
+
+  if (
+    !relativePath ||
+    relativePath === ".." ||
+    relativePath.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativePath)
+  ) {
+    return null;
+  }
+
+  return filePath;
+}
 
 export async function GET(request: NextRequest) {
+  const project = request.nextUrl.searchParams.get("project");
   const file = request.nextUrl.searchParams.get("file");
 
   if (!file) {
@@ -17,10 +44,18 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const filePath = path.resolve(workspace, file);
+  const projectRoot = await getProjectRoot(project);
 
-  // Prevent accessing files outside workspace
-  if (!filePath.startsWith(workspace)) {
+  if (!projectRoot) {
+    return Response.json(
+      { error: "Invalid or unknown project" },
+      { status: 400 }
+    );
+  }
+
+  const filePath = resolveProjectFile(projectRoot, file);
+
+  if (!filePath) {
     return Response.json(
       { error: "Invalid file path" },
       { status: 403 }
@@ -28,15 +63,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const content = await fs.readFile(
-      filePath,
-      "utf-8"
-    );
+    const content = await fs.readFile(filePath, "utf-8");
 
-    return Response.json({
-      file,
-      content,
-    });
+    return Response.json({ file, content });
   } catch {
     return Response.json(
       { error: "File not found" },
@@ -45,23 +74,36 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// EDITING FILE
 export async function POST(request: NextRequest) {
   const body = await request.json();
 
+  const project = body.project;
   const file = body.file;
   const content = body.content;
 
-  if (!file || typeof content !== "string") {
+  if (
+    typeof file !== "string" ||
+    !file ||
+    typeof content !== "string"
+  ) {
     return Response.json(
       { error: "File and content are required" },
       { status: 400 }
     );
   }
 
-  const filePath = path.resolve(workspace, file);
+  const projectRoot = await getProjectRoot(project);
 
-  if (!filePath.startsWith(workspace)) {
+  if (!projectRoot) {
+    return Response.json(
+      { error: "Invalid or unknown project" },
+      { status: 400 }
+    );
+  }
+
+  const filePath = resolveProjectFile(projectRoot, file);
+
+  if (!filePath) {
     return Response.json(
       { error: "Invalid file path" },
       { status: 403 }
@@ -71,10 +113,7 @@ export async function POST(request: NextRequest) {
   try {
     await fs.writeFile(filePath, content, "utf-8");
 
-    return Response.json({
-      success: true,
-      file,
-    });
+    return Response.json({ success: true, file });
   } catch (error) {
     return Response.json(
       {

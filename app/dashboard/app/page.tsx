@@ -117,7 +117,7 @@ export default function Home() {
     }, [selectedFile]);
 
     async function loadFiles() {
-        const response = await fetch("/api/workspace");
+        const response = await fetch(`/api/workspace?project=${selectedProject}`);
         const data = await response.json();
         setFiles(data.files ?? []);
     }
@@ -127,7 +127,7 @@ export default function Home() {
         selectedFileRef.current = file;
 
         const response = await fetch(
-            `/api/workspace/file?file=${encodeURIComponent(file)}`
+            `/api/workspace/file?project=${selectedProject}&file=${encodeURIComponent(file)}`
         );
 
         const data = await response.json();
@@ -150,6 +150,7 @@ export default function Home() {
                 body: JSON.stringify({
                     file: selectedFile,
                     content: fileContent,
+                    project:selectedProject
                 }),
             });
 
@@ -183,7 +184,7 @@ export default function Home() {
             },
             body: JSON.stringify({
                 prompt,
-                project:selectedProject
+                project: selectedProject
             }),
         });
 
