@@ -1,13 +1,16 @@
+import { Dispatch, SetStateAction } from 'react';
+
 interface FileExplorerProps {
   files: string[];
   selectedFile: string | null;
-  // onFileClick: (file: string) => void;
+  setSelectedFile: Dispatch<SetStateAction<string | null>>;
 }
+
 
 export function FileExplorer({
   files,
   selectedFile,
-  // onFileClick,
+  setSelectedFile
 }: FileExplorerProps) {
   return (
     <div className="rounded-xl border border-[var(--agent-border)] bg-[var(--agent-bg-elevated)] shadow-[var(--agent-shadow)]">
@@ -44,12 +47,11 @@ export function FileExplorer({
               return (
                 <button
                   key={file}
-                  // onClick={() => onFileClick(file)}
-                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
-                    isActive
+                  onClick={() => setSelectedFile(file)}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${isActive
                       ? "bg-[var(--agent-primary-soft)] text-[var(--agent-primary)]"
                       : "text-[var(--agent-text-muted)] hover:bg-[var(--agent-bg-sunken)]"
-                  }`}
+                    }`}
                 >
                   <svg
                     width="14"

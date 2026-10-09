@@ -16,12 +16,6 @@ import { ProcessesPanel } from "./components/processes-panel";
 import { useListProjectsQuery } from "@/store/features/projects-api";
 import { useOpenFileQuery, useSaveFileMutation } from "@/store/features/file-api";
 
-type Project = {
-    name: string;
-    path: string;
-};
-
-
 export default function Home() {
     const [prompt, setPrompt] = useState("");
     const [events, setEvents] = useState<AgentEvent[]>([]);
@@ -31,9 +25,6 @@ export default function Home() {
     //READING FILES STATE
     const [selectedFile, setSelectedFile] = useState<string | null>(null);
     const [fileContent, setFileContent] = useState("");
-
-    // EDITING FILE STATE
-    const [saving, setSaving] = useState(false);
 
     // TERMINAL OUTPUT
     const [terminalOutput, setTerminalOutput] = useState<string[]>([]);
@@ -45,20 +36,20 @@ export default function Home() {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
     // THE PROJECT LIST
-    const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProject, setSelectedProject] = useState("demo");
     const [newProjectName, setNewProjectName] = useState("");
-    console.log("THE  SELECTED PROJECTS:", selectedProject);
-
     // USE REF
     const selectedFileRef = useRef<string | null>(null);
 
     // REDUX HOOKS
     const { data, isLoading, error } = useListProjectsQuery();
+    const { data: openedFile } = useOpenFileQuery({ project: selectedProject, file: selectedFile || "" })
+    const [saveFile, { isLoading: saving }] = useSaveFileMutation();
+    console.log("THE OPENED FILE:",openedFile);
 
     useEffect(() => {
         loadFiles();
-    }, []);
+    }, [selectedProject]);
 
     // LIVE FILE WATCHER
     useEffect(() => {
@@ -69,7 +60,7 @@ export default function Home() {
         events.onmessage = async (event) => {
             const data = JSON.parse(event.data);
 
-            console.log("WORKSPACE EVENT:", data);
+            // console.log("WORKSPACE EVENT:", data);
             if (data.type === "process_output") {
                 setTerminalOutput((previous) => [...previous, data.data]);
 
@@ -123,14 +114,6 @@ export default function Home() {
         setFiles(data.files ?? []);
     }
 
-    const { data: OpenedFile, } = useOpenFileQuery({ project: selectedProject, file: selectedFileRef?.current || "" })
-    console.log(OpenedFile, "THE OPNE FILE DATA")
-
-    
-
-    // EDITING FILE FUNCTION
-    const [saveFile, { error: sError }] = useSaveFileMutation();
-
 
     async function runAgent() {
         setTerminalOutput([]);
@@ -178,7 +161,7 @@ export default function Home() {
 
                 const event = JSON.parse(line);
 
-                console.log("EVENT:", event);
+                // console.log("EVENT:", event);
 
                 setEvents((previous) => [
                     ...previous,
@@ -211,7 +194,8 @@ export default function Home() {
                             <FileExplorer
                                 files={files}
                                 selectedFile={selectedFile}
-                                // onFileClick={openFile}
+                                setSelectedFile={setSelectedFile}
+                            // onFileClick={openFile}
                             />
                             <div className="mt-6">
                                 <AgentInput
@@ -226,7 +210,7 @@ export default function Home() {
                         <div className="lg:col-span-2">
                             <EditorPanel
                                 selectedFile={selectedFile}
-                                fileContent={fileContent}
+                                fileContent={openedFile?.content}
                                 saving={saving}
                                 onContentChange={setFileContent}
                                 onSave={() => saveFile({ file: selectedFile, content: fileContent, project: selectedProject })}
