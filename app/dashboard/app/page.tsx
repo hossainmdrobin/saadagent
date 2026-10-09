@@ -54,7 +54,7 @@ export default function Home() {
     // LIVE FILE WATCHER
     useEffect(() => {
         const events = new EventSource(
-            "/api/workspace/events"
+            `/api/workspace/events?project=${encodeURIComponent(selectedProject)}`
         );
 
         events.onmessage = async (event) => {
@@ -106,7 +106,7 @@ export default function Home() {
         return () => {
             events.close();
         };
-    }, [selectedFile]);
+    }, [selectedFile,selectedProject]);
 
     async function loadFiles() {
         const response = await fetch(`/api/workspace?project=${selectedProject}`);

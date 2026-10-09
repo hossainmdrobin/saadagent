@@ -21,7 +21,7 @@ import { createSandboxForProject } from "@/lib/sandbox/sandbox-manager";
 import { workspaceManager } from "@/lib/workspace/workspace-manager";
 import { ChatOpenAI } from "@langchain/openai";
 const model = new ChatOpenAI({
-    model: "gc/grok-4.6",
+    model: "gc/grok-4.7",
     temperature: 0,
     apiKey: process.env.OMNIROUTE_API_KEY,
     maxTokens: 1024,
