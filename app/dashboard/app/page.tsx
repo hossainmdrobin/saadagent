@@ -22,7 +22,9 @@ export default function Home() {
     const [loading, setLoading] = useState(false);
     const [files, setFiles] = useState<string[]>([]);
     const [isCode, setIsCode] = useState(false);
-
+    const [messages, setMessages] = useState()
+    const [conversationId, setConversationId] = useState(() => crypto.randomUUID());
+console.log(conversationId, "THE CONVERSATION ID")
     //READING FILES STATE
     const [selectedFile, setSelectedFile] = useState<string | null>(null);
     const [fileContent, setFileContent] = useState("");
@@ -194,6 +196,14 @@ export default function Home() {
                     <div className="flex w-full py-2">
                         <div className="w-1/4 pr-1">
                             <div className="">
+                                <button
+                                    onClick={() => {
+                                        setConversationId(crypto.randomUUID());
+                                        // setMessages([]);
+                                    }}
+                                >
+                                    New Chat
+                                </button>
                                 <ChatComponent events={events} />
                                 <AgentInput
                                     prompt={prompt}
