@@ -1,0 +1,45 @@
+:root {
+  --agent-bg: #0b0f17;
+  --agent-bg-elevated: #111826;
+  --agent-bg-sunken: #070a10;
+  --agent-bg-card: #0f1623;
+  --agent-border: #1e293b;
+  --agent-border-soft: rgba(148, 163, 184, 0.18);
+  --agent-text: #e2e8f0;
+  --agent-text-muted: #94a3b8;
+  --agent-text-dim: #64748b;
+  --agent-primary: #38bdf8;
+  --agent-primary-soft: rgba(56, 189, 248, 0.15);
+  --agent-accent: #a78bfa;
+  --agent-success: #34d399;
+  --agent-warning: #fbbf24;
+  --agent-error: #f87171;
+  --agent-radius: 14px;
+  --agent-radius-sm: 10px;
+  --agent-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  --agent-font-sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --agent-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+}
+
+[data-theme="light"] {
+  --agent-bg: #f8fafc;
+  --agent-bg-elevated: #ffffff;
+  --agent-bg-sunken: #f1f5f9;
+  --agent-bg-card: #ffffff;
+  --agent-border: #e2e8f0;
+  --agent-border-soft: rgba(15, 23, 42, 0.08);
+  --agent-text: #0f172a;
+  --agent-text-muted: #475569;
+  --agent-text-dim: #94a3b8;
+  --agent-primary: #0284c7;
+  --agent-primary-soft: rgba(2, 132, 199, 0.12);
+  --agent-accent: #7c3aed;
+  --agent-success: #059669;
+  --agent-warning: #d97706;
+  --agent-error: #dc2626;
+  --agent-radius: 14px;
+  --agent-radius-sm: 10px;
+  --agent-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.12);
+  --agent-font-sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --agent-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+}

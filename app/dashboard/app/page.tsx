@@ -1,8 +1,18 @@
 "use client";
 
+import "./components/theme.css";
 import { useEffect, useRef, useState } from "react";
 import ChatComponent from "./ChatComponent";
 import { AgentEvent } from "./types";
+import { ThemeProvider } from "./components/theme-context";
+import { AppHeader } from "./components/app-header";
+import { AgentInput } from "./components/agent-input";
+import { ProjectSelector } from "./components/project-selector";
+import { FileExplorer } from "./components/file-explorer";
+import { EditorPanel } from "./components/editor-panel";
+import { TerminalPanel } from "./components/terminal-panel";
+import { PreviewPanel } from "./components/preview-panel";
+import { ProcessesPanel } from "./components/processes-panel";
 import { useListProjectsQuery } from "@/store/features/projects-api";
 
 type Project = {
@@ -42,8 +52,8 @@ export default function Home() {
     const selectedFileRef = useRef<string | null>(null);
 
     // REDUX HOOKS
-    const { data, isLoading,error } = useListProjectsQuery();
-    console.log(data, "sd;foais",error)
+    const { data, isLoading, error } = useListProjectsQuery();
+    console.log(data, "sd;foais", error)
 
     useEffect(() => {
         loadFiles();
@@ -217,199 +227,75 @@ export default function Home() {
     }
 
     return (
-        <main className="p-8 max-w-3xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">
-                SaadAgent
-            </h1>
-            <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Ask the coding agent..."
-                className="w-full border rounded p-3 min-h-32"
-            />
+        <ThemeProvider>
+            <div className="min-h-screen bg-[var(--agent-bg)] text-[var(--agent-text)]">
+                <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+                    <AppHeader />
 
-            <button
-                onClick={runAgent}
-                disabled={loading}
-                className="mt-3 border rounded px-4 py-2"
-            >
-                {loading ? "Running..." : "Run Agent"}
-            </button>
-            <div className="border rounded p-4">
-                <h2 className="font-semibold mb-3">
-                    WORKSPACE
-                </h2>
-
-                {files.length === 0 ? (
-                    <p className="text-gray-500">
-                        No files
-                    </p>
-                ) : (
-                    <div className="space-y-1">
-                        {files.map((file) => (
-                            <button
-                                key={file}
-                                onClick={() => openFile(file)}
-                                className="block w-full text-left text-sm hover:bg-gray-100 p-1 rounded"
-                            >
-                                📄 {file}
-                            </button>
-                        ))}
-                    </div>
-                )}
-            </div>
-            <div className="flex flex-wrap items-center gap-3 rounded-lg border p-4">
-                <label htmlFor="project-select" className="font-medium">
-                    Project
-                </label>
-
-                <select
-                    id="project-select"
-                    value={selectedProject}
-                    onChange={(event) =>
-                        setSelectedProject(event.target.value)
-                    }
-                    className="rounded border p-2"
-                >
-                    {data?.projects.map((project) => (
-                        <option key={project.name} value={project.name}>
-                            {project.name}
-                        </option>
-                    ))}
-                </select>
-
-                <input
-                    value={newProjectName}
-                    onChange={(event) =>
-                        setNewProjectName(event.target.value)
-                    }
-                    placeholder="New project name"
-                    className="min-w-0 rounded border p-2"
-                />
-
-                <button
-                    // onClick={createProject}
-                    className="rounded bg-blue-600 px-4 py-2 text-white"
-                >
-                    Create Project
-                </button>
-            </div>
-            {selectedFile && (
-                <div className="mt-6 border rounded">
-                    <div className="border-b p-3 font-semibold">
-                        {selectedFile}
+                    <div className="mt-6">
+                        <AgentInput
+                            prompt={prompt}
+                            loading={loading}
+                            onPromptChange={setPrompt}
+                            onRun={runAgent}
+                        />
                     </div>
 
-                    <textarea
-                        value={fileContent}
-                        onChange={(e) => setFileContent(e.target.value)}
-                        className="w-full min-h-96 p-4 font-mono text-sm outline-none resize-y"
-                    />
-                    <div className="border-b p-3 flex items-center justify-between">
-                        <span className="font-semibold">
-                            {selectedFile}
-                        </span>
-
-                        <button
-                            onClick={saveFile}
-                            disabled={saving}
-                            className="border rounded px-3 py-1"
-                        >
-                            {saving ? "Saving..." : "Save"}
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            <div className="mt-8 space-y-2 text-red-400">
-                <div className="flex">
-                    <ChatComponent events={events} />
-
-                    {previewUrl && (
-                        <div className="rounded-lg border">
-                            <div className="border-b p-3">
-                                <div className="text-sm font-medium">
-                                    Live Preview
-                                </div>
-
-                                <div className="text-xs text-gray-500">
-                                    {previewUrl}
-                                </div>
-                            </div>
-
-                            <iframe
-                                src={previewUrl}
-                                title="Live Preview"
-                                className="h-[600px] w-full"
+                    <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+                        <div className="lg:col-span-1">
+                            <FileExplorer
+                                files={files}
+                                selectedFile={selectedFile}
+                                onFileClick={openFile}
                             />
                         </div>
-                    )}
-                </div>
-                <div className="flex">
-                    <div className="rounded-lg bg-black p-4">
-                        <div className="mb-3 text-sm text-gray-400">
-                            Terminal
+
+                        <div className="lg:col-span-2">
+                            <EditorPanel
+                                selectedFile={selectedFile}
+                                fileContent={fileContent}
+                                saving={saving}
+                                onContentChange={setFileContent}
+                                onSave={saveFile}
+                            />
                         </div>
-
-                        <pre className="min-h-[200px] whitespace-pre-wrap text-sm text-white">
-                            {terminalOutput.length > 0
-                                ? terminalOutput.join("")
-                                : "No output yet..."}
-                        </pre>
-                    </div>
-                    {/* Running Process */}
-                    <div className="rounded-lg border p-4">
-                        <div className="mb-3 font-semibold">
-                            Running Processes
-                        </div>
-
-                        {processes.length === 0 ? (
-                            <div className="text-sm text-gray-500">
-                                No running processes
-                            </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {processes.map((process) => (
-                                    <div
-                                        key={process.pid}
-                                        className="flex items-center justify-between rounded bg-gray-100 p-3"
-                                    >
-                                        <div>
-                                            <div className="font-medium">
-                                                {process.command}
-                                            </div>
-
-                                            <div className="text-xs text-gray-500">
-                                                PID: {process.pid} ·{" "}
-                                                {process.cwd ?? "workspace"}
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            onClick={async () => {
-                                                await fetch("/api/process/stop", {
-                                                    method: "POST",
-                                                    headers: {
-                                                        "Content-Type":
-                                                            "application/json",
-                                                    },
-                                                    body: JSON.stringify({
-                                                        pid: process.pid,
-                                                    }),
-                                                });
-                                            }}
-                                            className="rounded bg-red-600 px-3 py-1 text-sm text-white"
-                                        >
-                                            Stop
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
                     </div>
 
+                    <div className="mt-6">
+                        <ProjectSelector
+                            projects={data?.projects ?? []}
+                            selectedProject={selectedProject}
+                            newProjectName={newProjectName}
+                            onProjectChange={setSelectedProject}
+                            onNewProjectChange={setNewProjectName}
+                            onCreateProject={() => { }}
+                        />
+                    </div>
+
+                    <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+                        <ChatComponent events={events} />
+
+                        {previewUrl && <PreviewPanel url={previewUrl} />}
+                    </div>
+
+                    <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+                        <TerminalPanel output={terminalOutput} />
+
+                        <ProcessesPanel
+                            processes={processes}
+                            onStop={async (pid) => {
+                                await fetch("/api/process/stop", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({ pid }),
+                                });
+                            }}
+                        />
+                    </div>
                 </div>
             </div>
-        </main>
+        </ThemeProvider>
     );
 }
