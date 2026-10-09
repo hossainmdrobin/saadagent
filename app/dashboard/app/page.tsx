@@ -42,13 +42,13 @@ export default function Home() {
     const selectedFileRef = useRef<string | null>(null);
 
     // REDUX HOOKS
-    const { data, isLoading, error } = useListProjectsQuery();
+    const { data } = useListProjectsQuery();
     const { data: openedFile } = useOpenFileQuery({ project: selectedProject, file: selectedFile || "" })
     const [saveFile, { isLoading: saving }] = useSaveFileMutation();
-    console.log("THE OPENED FILE:",openedFile);
 
     useEffect(() => {
         loadFiles();
+        setSelectedFile(null)
     }, [selectedProject]);
 
     // LIVE FILE WATCHER
@@ -60,7 +60,7 @@ export default function Home() {
         events.onmessage = async (event) => {
             const data = JSON.parse(event.data);
 
-            // console.log("WORKSPACE EVENT:", data);
+            console.log("WORKSPACE EVENT:", data);
             if (data.type === "process_output") {
                 setTerminalOutput((previous) => [...previous, data.data]);
 
@@ -161,7 +161,7 @@ export default function Home() {
 
                 const event = JSON.parse(line);
 
-                // console.log("EVENT:", event);
+                console.log("EVENT:", event);
 
                 setEvents((previous) => [
                     ...previous,
