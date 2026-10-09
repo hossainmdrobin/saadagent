@@ -1,44 +1,34 @@
+
 import { tool } from "langchain";
 import { z } from "zod";
 import { processManager } from "@/lib/sandbox/process-manager";
 
-export const listProcesses = tool(
-  async () => {
-    const processes = processManager.list();
+export function createListProcessesTool(projectName: string) {
+    return tool(
+        async () => {
+            const processes = processManager
+                .list()
+                .filter((process) => process.project === projectName);
 
-    if (processes.length === 0) {
-      return "No managed processes are currently running.";
-    }
+            if (processes.length === 0) {
+                return `No managed processes are currently running for project "${projectName}".`;
+            }
 
-    return JSON.stringify(processes, null, 2);
-  },
-  {
-    name: "list_processes",
-    description: `
-List all long-running processes currently started by the coding agent.
+            return JSON.stringify(processes, null, 2);
+        },
+        {
+            name: "list_processes",
+            description: `
+List long-running processes belonging to the selected project "${projectName}".
 
-IMPORTANT:
-Before starting a development server or other long-running process,
-use this tool to check whether the process is already running.
+Before starting a development server:
+- Check whether it is already running.
+- Do not start a duplicate server.
+- Reuse an existing process when appropriate.
 
-Use this tool when:
-- the user asks what is running
-- you need to find a PID
-- you need to stop a process
-- you are about to start a development server
-- you need to check whether a server is already running
-
-If the required server is already running:
-- do NOT start another copy
-- reuse the existing process
-- report its PID
-
-The result contains:
-- pid
-- command
-- cwd
-- startedAt
-`,
-    schema: z.object({}),
-  }
-);
+Only processes belonging to this project are listed.
+            `,
+            schema: z.object({}),
+        }
+    );
+}

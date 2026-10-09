@@ -1,7 +1,9 @@
 import { NextRequest } from "next/server";
-import { agent } from "@/lib/agent/agent";
+import { createAgentForProject } from "@/lib/agent/agent";
 import { AgentEvent } from "@/lib/agent/events";
 import { AIMessage, BaseMessage } from "@langchain/core/messages";
+import { projectManager } from "@/lib/workspace/project-manager";
+import { workspaceManager } from "@/lib/workspace/workspace-manager";
 
 function encode(event: AgentEvent) {
     return new TextEncoder().encode(
@@ -18,12 +20,40 @@ function isAIMessage(
 export async function POST(request: NextRequest) {
     const body = await request.json();
 
+    const prompt = body.prompt;
+    const project = body.project;
+    if (
+        typeof project !== "string" ||
+        !(await projectManager.exists(project))
+    ) {
+        return Response.json(
+            {
+                error: "Invalid or unknown project",
+            },
+            { status: 400 }
+        );
+    }
+
+    const projectPath = workspaceManager.getProjectPath(project);
+    const agent = createAgentForProject(project);
+
     const stream = await agent.stream(
         {
             messages: [
                 {
                     role: "user",
-                    content: body.prompt,
+                    content: `
+                        Selected project: ${project}
+                        Project directory: ${projectPath}
+
+                        User request:
+                        ${prompt}
+
+                        Important:
+                        - Work only inside the selected project.
+                        - Treat the selected project directory as the root of this project.
+                        - Do not modify files in other projects.
+                `.trim(),
                 },
             ],
         },

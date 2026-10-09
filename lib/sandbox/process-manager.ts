@@ -69,7 +69,7 @@ class ProcessManager {
     }
 
     get(pid: number) {
-        return this.processes.get(pid)?.process;
+        return this.processes.get(pid);
     }
 
     subscribe(callback: OutputCallback) {

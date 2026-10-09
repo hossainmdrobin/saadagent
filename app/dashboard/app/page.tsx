@@ -183,6 +183,7 @@ export default function Home() {
             },
             body: JSON.stringify({
                 prompt,
+                project:selectedProject
             }),
         });
 
@@ -231,13 +232,14 @@ export default function Home() {
             <div className="min-h-screen bg-[var(--agent-bg)] text-[var(--agent-text)]">
                 <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
                     <AppHeader />
-
                     <div className="mt-6">
-                        <AgentInput
-                            prompt={prompt}
-                            loading={loading}
-                            onPromptChange={setPrompt}
-                            onRun={runAgent}
+                        <ProjectSelector
+                            projects={data?.projects ?? []}
+                            selectedProject={selectedProject}
+                            newProjectName={newProjectName}
+                            onProjectChange={setSelectedProject}
+                            onNewProjectChange={setNewProjectName}
+                            onCreateProject={() => { }}
                         />
                     </div>
 
@@ -248,6 +250,14 @@ export default function Home() {
                                 selectedFile={selectedFile}
                                 onFileClick={openFile}
                             />
+                            <div className="mt-6">
+                                <AgentInput
+                                    prompt={prompt}
+                                    loading={loading}
+                                    onPromptChange={setPrompt}
+                                    onRun={runAgent}
+                                />
+                            </div>
                         </div>
 
                         <div className="lg:col-span-2">
@@ -259,17 +269,6 @@ export default function Home() {
                                 onSave={saveFile}
                             />
                         </div>
-                    </div>
-
-                    <div className="mt-6">
-                        <ProjectSelector
-                            projects={data?.projects ?? []}
-                            selectedProject={selectedProject}
-                            newProjectName={newProjectName}
-                            onProjectChange={setSelectedProject}
-                            onNewProjectChange={setNewProjectName}
-                            onCreateProject={() => { }}
-                        />
                     </div>
 
                     <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
