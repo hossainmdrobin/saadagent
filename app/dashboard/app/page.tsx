@@ -14,6 +14,7 @@ import { TerminalPanel } from "./components/terminal-panel";
 import { PreviewPanel } from "./components/preview-panel";
 import { ProcessesPanel } from "./components/processes-panel";
 import { useListProjectsQuery } from "@/store/features/projects-api";
+import { useOpenFileQuery, useSaveFileMutation } from "@/store/features/file-api";
 
 type Project = {
     name: string;
@@ -47,13 +48,13 @@ export default function Home() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProject, setSelectedProject] = useState("demo");
     const [newProjectName, setNewProjectName] = useState("");
+    console.log("THE  SELECTED PROJECTS:", selectedProject);
 
     // USE REF
     const selectedFileRef = useRef<string | null>(null);
 
     // REDUX HOOKS
     const { data, isLoading, error } = useListProjectsQuery();
-    console.log(data, "sd;foais", error)
 
     useEffect(() => {
         loadFiles();
@@ -97,7 +98,7 @@ export default function Home() {
                     currentFile &&
                     data.path === currentFile
                 ) {
-                    await openFile(currentFile);
+                    // await openFile(currentFile);
                 }
 
                 if (
@@ -122,53 +123,14 @@ export default function Home() {
         setFiles(data.files ?? []);
     }
 
-    async function openFile(file: string) {
-        setSelectedFile(file);
-        selectedFileRef.current = file;
+    const { data: OpenedFile, } = useOpenFileQuery({ project: selectedProject, file: selectedFileRef?.current || "" })
+    console.log(OpenedFile, "THE OPNE FILE DATA")
 
-        const response = await fetch(
-            `/api/workspace/file?project=${selectedProject}&file=${encodeURIComponent(file)}`
-        );
-
-        const data = await response.json();
-
-        setFileContent(data.content);
-    }
+    
 
     // EDITING FILE FUNCTION
-    async function saveFile() {
-        if (!selectedFile) return;
+    const [saveFile, { error: sError }] = useSaveFileMutation();
 
-        setSaving(true);
-
-        try {
-            const response = await fetch("/api/workspace/file", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    file: selectedFile,
-                    content: fileContent,
-                    project:selectedProject
-                }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error ?? "Failed to save file");
-            }
-        } catch (error) {
-            alert(
-                error instanceof Error
-                    ? error.message
-                    : "Failed to save file"
-            );
-        } finally {
-            setSaving(false);
-        }
-    }
 
     async function runAgent() {
         setTerminalOutput([]);
@@ -249,7 +211,7 @@ export default function Home() {
                             <FileExplorer
                                 files={files}
                                 selectedFile={selectedFile}
-                                onFileClick={openFile}
+                                // onFileClick={openFile}
                             />
                             <div className="mt-6">
                                 <AgentInput
@@ -267,7 +229,7 @@ export default function Home() {
                                 fileContent={fileContent}
                                 saving={saving}
                                 onContentChange={setFileContent}
-                                onSave={saveFile}
+                                onSave={() => saveFile({ file: selectedFile, content: fileContent, project: selectedProject })}
                             />
                         </div>
                     </div>
