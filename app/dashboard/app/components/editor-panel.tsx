@@ -15,7 +15,7 @@ export function EditorPanel({
 }: EditorPanelProps) {
   if (!selectedFile) {
     return (
-      <div className="flex h-full min-h-[200px] items-center justify-center rounded-xl border border-dashed border-[var(--agent-border)] bg-[var(--agent-bg-elevated)]">
+      <div className="flex h-full w-full min-h-[200px] items-center justify-center rounded-xl border border-dashed border-[var(--agent-border)] bg-[var(--agent-bg-elevated)]">
         <div className="text-center">
           <svg
             width="40"
@@ -40,7 +40,7 @@ export function EditorPanel({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[var(--agent-border)] bg-[var(--agent-bg-elevated)] shadow-[var(--agent-shadow)]">
+    <div className="overflow-hidden w-full rounded-xl border border-[var(--agent-border)] bg-[var(--agent-bg-elevated)] shadow-[var(--agent-shadow)]">
       <div className="flex items-center justify-between border-b border-[var(--agent-border)] px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="flex h-2 w-2 rounded-full bg-[var(--agent-success)]" />

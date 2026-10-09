@@ -4,10 +4,6 @@ import { AgentEvent } from "@/lib/agent/events";
 import { AIMessage, BaseMessage } from "@langchain/core/messages";
 import { projectManager } from "@/lib/workspace/project-manager";
 import { workspaceManager } from "@/lib/workspace/workspace-manager";
-import {
-    loadConversation,
-    saveConversation,
-} from "@/lib/agent/conversation-store";
 
 function encode(event: AgentEvent) {
     return new TextEncoder().encode(
@@ -26,6 +22,18 @@ export async function POST(request: NextRequest) {
 
     const prompt = body.prompt;
     const project = body.project;
+    const conversationId = body.conversationId;
+
+    if (
+        typeof conversationId !== "string" ||
+        !/^[a-zA-Z0-9_-]+$/.test(conversationId)
+    ) {
+        return Response.json(
+            { error: "Invalid conversation ID" },
+            { status: 400 }
+        );
+    }
+
     if (
         typeof project !== "string" ||
         !(await projectManager.exists(project))
@@ -40,14 +48,13 @@ export async function POST(request: NextRequest) {
 
     const projectPath = workspaceManager.getProjectPath(project);
     const agent = createAgentForProject(project);
-    const history = await loadConversation(project);
 
     const stream = await agent.stream(
         {
-            messages: [...history,
-            {
-                role: "user",
-                content: `
+            messages: [
+                {
+                    role: "user",
+                    content: `
                         Selected project: ${project}
                         Project directory: ${projectPath}
 
@@ -59,21 +66,16 @@ export async function POST(request: NextRequest) {
                         - Treat the selected project directory as the root of this project.
                         - Do not modify files in other projects.
                 `.trim(),
-            },
+                },
             ],
         },
         {
             streamMode: "updates",
-            configurable:{
-                thread_id:`project-${project}`
+            configurable: {
+                thread_id: `project-${project}-chat-${conversationId}`
             }
         }
     );
-    const finalState = await agent.getState({
-        configurable: {
-            thread_id: project,
-        },
-    });
 
     const readable = new ReadableStream({
         async start(controller) {

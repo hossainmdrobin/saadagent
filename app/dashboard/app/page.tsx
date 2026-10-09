@@ -20,7 +20,8 @@ export default function Home() {
     const [prompt, setPrompt] = useState("");
     const [events, setEvents] = useState<AgentEvent[]>([]);
     const [loading, setLoading] = useState(false);
-    const [files, setFiles] = useState<string[]>([])
+    const [files, setFiles] = useState<string[]>([]);
+    const [isCode, setIsCode] = useState(false);
 
     //READING FILES STATE
     const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -106,7 +107,7 @@ export default function Home() {
         return () => {
             events.close();
         };
-    }, [selectedFile,selectedProject]);
+    }, [selectedFile, selectedProject]);
 
     async function loadFiles() {
         const response = await fetch(`/api/workspace?project=${selectedProject}`);
@@ -129,7 +130,8 @@ export default function Home() {
             },
             body: JSON.stringify({
                 prompt,
-                project: selectedProject
+                project: selectedProject,
+                conversationId: 'chat-test-1'
             }),
         });
 
@@ -176,7 +178,7 @@ export default function Home() {
     return (
         <ThemeProvider>
             <div className="min-h-screen bg-[var(--agent-bg)] text-[var(--agent-text)]">
-                <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+                <div className="mx-auto max-w-7xl py-6 sm:py-8 ">
                     <AppHeader />
                     <div className="mt-6">
                         <ProjectSelector
@@ -189,15 +191,10 @@ export default function Home() {
                         />
                     </div>
 
-                    <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-                        <div className="lg:col-span-1">
-                            <FileExplorer
-                                files={files}
-                                selectedFile={selectedFile}
-                                setSelectedFile={setSelectedFile}
-                            // onFileClick={openFile}
-                            />
-                            <div className="mt-6">
+                    <div className="flex w-full py-2">
+                        <div className="w-1/4 pr-1">
+                            <div className="">
+                                <ChatComponent events={events} />
                                 <AgentInput
                                     prompt={prompt}
                                     loading={loading}
@@ -207,7 +204,12 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <div className="lg:col-span-2">
+                        {isCode && <div className="flex w-3/4">
+                            <FileExplorer
+                                files={files}
+                                selectedFile={selectedFile}
+                                setSelectedFile={setSelectedFile}
+                            />
                             <EditorPanel
                                 selectedFile={selectedFile}
                                 fileContent={openedFile?.content}
@@ -215,14 +217,13 @@ export default function Home() {
                                 onContentChange={setFileContent}
                                 onSave={() => saveFile({ file: selectedFile, content: fileContent, project: selectedProject })}
                             />
-                        </div>
+                        </div>}
+                        {!isCode && <div className="w-full">
+                            {previewUrl && <PreviewPanel url={previewUrl} />}
+                        </div>}
                     </div>
 
-                    <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
-                        <ChatComponent events={events} />
 
-                        {previewUrl && <PreviewPanel url={previewUrl} />}
-                    </div>
 
                     <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
                         <TerminalPanel output={terminalOutput} />
