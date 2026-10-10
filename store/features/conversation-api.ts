@@ -12,11 +12,20 @@ interface GetConversationsArg {
     project: string;
 }
 
+interface SingleConversationArgs {
+    id: string,
+    project: string
+}
+
 export const conversationApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         getConversations: builder.query<Conversation[], GetConversationsArg>({
             query: ({ project }) => `/conversations?project=${encodeURIComponent(project)}`,
             providesTags: ["CONVERSATIONS"]
+        }),
+        getConversationsById: builder.query<Conversation[], SingleConversationArgs>({
+            query: ({ project, id }) => `/conversations/${id}?project=${encodeURIComponent(project)}`,
+            // providesTags: ["CONVERSATIONS"]
         }),
         createConversation: builder.mutation({
             query: (body) => ({
@@ -26,7 +35,8 @@ export const conversationApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ["CONVERSATIONS"],
         }),
+
     }),
 });
 
-export const { useGetConversationsQuery, useCreateConversationMutation } = conversationApi;
+export const { useGetConversationsQuery, useCreateConversationMutation, useGetConversationsByIdQuery } = conversationApi;

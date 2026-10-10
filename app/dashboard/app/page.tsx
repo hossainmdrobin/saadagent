@@ -15,7 +15,7 @@ import { PreviewPanel } from "./components/preview-panel";
 import { ProcessesPanel } from "./components/processes-panel";
 import { useListProjectsQuery } from "@/store/features/projects-api";
 import { useOpenFileQuery, useSaveFileMutation } from "@/store/features/file-api";
-import { useCreateConversationMutation, useGetConversationsQuery } from "@/store/features/conversation-api";
+import { useCreateConversationMutation, useGetConversationsByIdQuery, useGetConversationsQuery } from "@/store/features/conversation-api";
 import { ChatHistory } from "./ChatHistory";
 
 export default function Home() {
@@ -25,7 +25,7 @@ export default function Home() {
     const [files, setFiles] = useState<string[]>([]);
     const [isCode, setIsCode] = useState(false);
     const [messages, setMessages] = useState()
-    const [conversationId, setConversationId] = useState(() => crypto.randomUUID());
+    const [conversationId, setConversationId] = useState("");
     //READING FILES STATE
     const [selectedFile, setSelectedFile] = useState<string | null>(null);
     const [fileContent, setFileContent] = useState("");
@@ -52,6 +52,8 @@ export default function Home() {
     const { data: conversations } = useGetConversationsQuery({ project: selectedProject })
     console.log("CONVERSATION DATA:", conversations)
     const [createConversation, { data: createConversationData }] = useCreateConversationMutation()
+    const { data: selectedChatData } = useGetConversationsByIdQuery({ id: conversationId, project: selectedProject })
+    console.log("Selecred conversation:",selectedChatData);
 
     useEffect(() => {
         loadFiles();
@@ -208,7 +210,7 @@ export default function Home() {
                                     New Chat
                                 </button>
                                 <ChatComponent events={events} />
-                                <ChatHistory conversations={conversations || []} />
+                                <ChatHistory conversations={conversations || []} setConversationId={setConversationId} />
                                 <AgentInput
                                     prompt={prompt}
                                     loading={loading}
