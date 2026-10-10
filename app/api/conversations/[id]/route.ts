@@ -111,3 +111,71 @@ export async function PATCH(
 
     return NextResponse.json(conversations[index]);
 }
+
+
+
+export async function DELETE(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const { id } = await params;
+    const project = request.nextUrl.searchParams.get("project");
+
+    if (
+        !project ||
+        !projectManager.exists(project) ||
+        !/^[a-zA-Z0-9_-]+$/.test(id)
+    ) {
+        return NextResponse.json(
+            { error: "Invalid project or conversation ID" },
+            { status: 400 }
+        );
+    }
+
+    const fs = await import("fs/promises");
+    const path = await import("path");
+
+    const filePath = path.join(
+        process.cwd(),
+        "data",
+        "conversations.json"
+    );
+
+    let conversations;
+
+    try {
+        conversations = JSON.parse(
+            await fs.readFile(filePath, "utf-8")
+        );
+    } catch {
+        return NextResponse.json(
+            { error: "Conversation metadata not found" },
+            { status: 404 }
+        );
+    }
+
+    const index = conversations.findIndex(
+        (chat: { id: string; project: string }) =>
+            chat.id === id && chat.project === project
+    );
+
+    if (index === -1) {
+        return NextResponse.json(
+            { error: "Conversation not found" },
+            { status: 404 }
+        );
+    }
+
+    conversations.splice(index, 1);
+
+    await fs.writeFile(
+        filePath,
+        JSON.stringify(conversations, null, 2),
+        "utf-8"
+    );
+
+    return NextResponse.json({
+        success: true,
+        deletedId: id,
+    });
+}

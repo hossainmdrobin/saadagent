@@ -233,6 +233,15 @@ export default function Home() {
         }
     }
 
+    function handleSelectConversation(id: string) {
+        if (id === conversationId) return;
+
+        setConversationId(id);
+        setEvents([]);
+        setPrompt("");
+        setTerminalOutput([]);
+    }
+
     // Create a conversation and select it.
     async function handleNewChat() {
         try {
@@ -444,7 +453,7 @@ export default function Home() {
                                 <ChatHistory
                                     conversations={conversations || []}
                                     conversationId={conversationId}
-                                    setConversationId={setConversationId}
+                                    setConversationId={handleSelectConversation}
                                 />
 
                                 <AgentInput
