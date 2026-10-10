@@ -15,6 +15,7 @@ import { PreviewPanel } from "./components/preview-panel";
 import { ProcessesPanel } from "./components/processes-panel";
 import { useListProjectsQuery } from "@/store/features/projects-api";
 import { useOpenFileQuery, useSaveFileMutation } from "@/store/features/file-api";
+import { useCreateConversationMutation, useGetConversationsQuery } from "@/store/features/conversation-api";
 
 export default function Home() {
     const [prompt, setPrompt] = useState("");
@@ -24,7 +25,6 @@ export default function Home() {
     const [isCode, setIsCode] = useState(false);
     const [messages, setMessages] = useState()
     const [conversationId, setConversationId] = useState(() => crypto.randomUUID());
-console.log(conversationId, "THE CONVERSATION ID")
     //READING FILES STATE
     const [selectedFile, setSelectedFile] = useState<string | null>(null);
     const [fileContent, setFileContent] = useState("");
@@ -48,6 +48,9 @@ console.log(conversationId, "THE CONVERSATION ID")
     const { data } = useListProjectsQuery();
     const { data: openedFile } = useOpenFileQuery({ project: selectedProject, file: selectedFile || "" })
     const [saveFile, { isLoading: saving }] = useSaveFileMutation();
+    const { data: conversations } = useGetConversationsQuery({ project: selectedProject })
+    console.log("CONVERSATION DATA:", data)
+    const [createConversation, { data: createConversationData }] = useCreateConversationMutation()
 
     useEffect(() => {
         loadFiles();
@@ -194,12 +197,11 @@ console.log(conversationId, "THE CONVERSATION ID")
                     </div>
 
                     <div className="flex w-full py-2">
-                        <div className="w-1/4 pr-1">
+                        <div className="w-2/5 pr-1">
                             <div className="">
                                 <button
                                     onClick={() => {
-                                        setConversationId(crypto.randomUUID());
-                                        // setMessages([]);
+                                        createConversation({ project: selectedProject })
                                     }}
                                 >
                                     New Chat
@@ -214,7 +216,7 @@ console.log(conversationId, "THE CONVERSATION ID")
                             </div>
                         </div>
 
-                        {isCode && <div className="flex w-3/4">
+                        {isCode && <div className="flex w-3/5">
                             <FileExplorer
                                 files={files}
                                 selectedFile={selectedFile}
