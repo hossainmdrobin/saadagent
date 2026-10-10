@@ -1,24 +1,58 @@
+
 import { tool } from "langchain";
 import { z } from "zod";
+import type { Sandbox } from "@/lib/sandbox/sandbox";
 
-import { LocalSandbox } from "@/lib/sandbox/local-sandbox";
+export function createRunCommandTool(sandbox: Sandbox) {
+  return tool(
+    async ({ command, cwd }) => {
+      try {
+        const result = await sandbox.execute(command, cwd);
 
-const sandbox = new LocalSandbox(
-  `${process.cwd()}/workspace`
-);
+        return [
+          `success: ${result.success}`,
+          `stdout: ${result.stdout}`,
+          `stderr: ${result.stderr}`,
+          `exitCode: ${result.exitCode}`,
+        ].join("\n");
+      } catch (error) {
+        return [
+          "success: false",
+          `error: ${error instanceof Error
+            ? error.message
+            : String(error)
+          }`,
+        ].join("\n");
+      }
+    },
+    {
+      name: "run_command",
+      description: `
+Execute a short-lived command inside the selected project.
 
-export const runCommand = tool(
-  async ({ command }) => {
-    const result = await sandbox.execute(command);
+Use this for:
+- npm test
+- npm install
+- npm run build
+- Checking command output
 
-    return JSON.stringify(result);
-  },
-  {
-    name: "run_command",
-    description:
-      "Execute a command inside the project workspace. Use this for tests, builds, package installation, and inspecting command output.",
-    schema: z.object({
-      command: z.string(),
-    }),
-  }
-);
+The cwd must be relative to the selected project's root.
+Examples:
+- "." (project root)
+- "src"
+- "src/components"
+
+Never use an absolute Windows path.
+            `,
+      schema: z.object({
+        command: z.string(),
+        cwd: z
+          .string()
+          .optional()
+          .describe(
+            "Directory relative to the selected project's root, such as '.' or 'src'. Never use an absolute Windows path."
+          ),
+      }),
+    }
+  );
+}

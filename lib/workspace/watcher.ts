@@ -1,47 +1,50 @@
+
 import fs from "fs";
 import path from "path";
+import { workspaceManager } from "@/lib/workspace/workspace-manager";
 
 export type WorkspaceEvent =
-    | {
-        type: "created";
-        path: string;
-    }
-    | {
-        type: "changed";
-        path: string;
-    }
-    | {
-        type: "deleted";
-        path: string;
-    };
-
-const workspace = path.resolve(
-    process.cwd(),
-    "workspace"
-);
+    | { type: "created"; path: string }
+    | { type: "changed"; path: string }
+    | { type: "deleted"; path: string };
 
 export function watchWorkspace(
+    projectName: string,
     callback: (event: WorkspaceEvent) => void
 ) {
+    const projectRoot = path.resolve(
+        workspaceManager.getProjectPath(projectName)
+    );
+
     const watcher = fs.watch(
-        workspace,
-        {
-            recursive: true,
-        },
+        projectRoot,
+        { recursive: true },
         (eventType, filename) => {
             if (!filename) return;
 
-            const filePath = path.join(
-                workspace,
-                filename.toString()
+            const relativePath = filename.toString();
+            const filePath = path.resolve(
+                projectRoot,
+                relativePath
             );
+
+            // Prevent paths from escaping the project.
+            const relative = path.relative(projectRoot, filePath);
+
+            if (
+                !relative ||
+                relative === ".." ||
+                relative.startsWith(`..${path.sep}`) ||
+                path.isAbsolute(relative)
+            ) {
+                return;
+            }
 
             if (eventType === "change") {
                 callback({
                     type: "changed",
-                    path: filename.toString(),
+                    path: relativePath,
                 });
-
                 return;
             }
 
@@ -49,19 +52,17 @@ export function watchWorkspace(
                 if (fs.existsSync(filePath)) {
                     callback({
                         type: "created",
-                        path: filename.toString(),
+                        path: relativePath,
                     });
                 } else {
                     callback({
                         type: "deleted",
-                        path: filename.toString(),
+                        path: relativePath,
                     });
                 }
             }
         }
     );
 
-    return () => {
-        watcher.close();
-    };
+    return () => watcher.close();
 }

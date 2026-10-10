@@ -1,74 +1,76 @@
-import { createDeepAgent, FilesystemBackend } from "deepagents";
-// import { writeFileTool } from "./tools";
-import path from "path";
-import { runCommand } from "./exec-tool";
-import { getWorkspaceInfo } from "./workspace-tool";
 
-import { ChatOpenAI } from "@langchain/openai";
-const model = new ChatOpenAI({
-    model: "openai/gpt-oss-120b",
-    temperature: 0,
-    apiKey: process.env.HUGGINGFACE_API_KEY,
-    maxTokens: 1024,
-    configuration: {
-        baseURL: process.env.HUGGINGFACE_BASE_URL?.trim()
-    }
-});
-// import {ChatOllama} from "@langchain/ollama"
+// import { ChatOllama } from "@langchain/ollama"
+
 // const model = new ChatOllama({
-//   model: "qwen3:1.7b",              // Ensure you've pulled this model via `ollama pull`
-//   temperature: 0,
+//     model: "qwen3:1.7b",              // Ensure you've pulled this model via `ollama pull`
+//     temperature: 0,
 // });
 
-const workspace = path.join(process.cwd(), "workspace");
 
-const backend = new FilesystemBackend({
-    rootDir: workspace,
-    virtualMode: true,
+import { createDeepAgent, FilesystemBackend } from "deepagents";
+import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
+import path from "path";
+import fs from "fs";
+
+import { createRunCommandTool } from "./exec-tool";
+import { createStartProcessTool } from "./process-tool";
+import { getWorkspaceInfo } from "./workspace-tool";
+import { createStopProcessTool } from "./stop-process-tool";
+import { createListProcessesTool } from "./list-process-tool";
+import { prompt } from "./systemPrompt";
+
+import { createSandboxForProject } from "@/lib/sandbox/sandbox-manager";
+import { workspaceManager } from "@/lib/workspace/workspace-manager";
+import { ChatOpenAI } from "@langchain/openai";
+const model = new ChatOpenAI({
+    model: "gc/grok-4.7",
+    temperature: 0,
+    apiKey: process.env.OMNIROUTE_API_KEY,
+    maxTokens: 1024,
+    configuration: {
+        baseURL: process.env.OMNIROUTE_BASE_URL?.trim(),
+    },
 });
 
-export const agent = createDeepAgent({
-    model,
-    backend,
-    tools: [runCommand, getWorkspaceInfo],
-    systemPrompt: `
-You are an autonomous coding agent.
+const dataDir = path.join(process.cwd(), "data");
 
-You work inside a project workspace.
+fs.mkdirSync(dataDir, { recursive: true });
 
-Your workflow is:
+const checkpointer = SqliteSaver.fromConnString(
+    path.join(dataDir, "saadagent.sqlite")
+);
 
-1. Understand the user's request.
-2. Inspect the existing project before making changes.
-3. Create or modify files using the filesystem tools.
-4. Run the appropriate command to test your changes.
-5. If the command fails:
-   - inspect the error
-   - identify the cause
-   - modify the relevant files
-   - run the command again
-6. Continue until the task works or you have a clear reason you cannot complete it.
-7. Only report success after verification.
+export function createAgentForProject(projectName: string): ReturnType<typeof createDeepAgent> {
+    const projectPath = workspaceManager.getProjectPath(projectName);
+    const projectSandbox = createSandboxForProject(projectName);
 
-Available capabilities:
+    const backend = new FilesystemBackend({
+        rootDir: projectPath,
+        virtualMode: true,
+    });
 
-- Read files
-- Write files
-- Edit files
-- List files
-- Run commands
-- Inspect command output
+    return createDeepAgent({
+        model,
+        backend,
+        checkpointer,
+        tools: [
+            createRunCommandTool(projectSandbox),
+            createStartProcessTool(projectSandbox, projectName),
+            createListProcessesTool(projectName),
+            createStopProcessTool(projectName),
+            getWorkspaceInfo,
+        ],
+        systemPrompt: `
+${prompt}
 
-Use the filesystem tools for file operations.
+Selected project: ${projectName}
+Project root: ${projectPath}
 
-Use run_command for:
-- npm commands
-- tests
-- builds
-- scripts
-- checking command output
-
-When a command fails, do not immediately give up.
-Analyze the error and attempt to fix it.
-`,
-});
+Important:
+- Work only within the selected project's root.
+- Use paths relative to this project root.
+- Run commands relative to this project root.
+- Never access or modify sibling projects.
+        `,
+    });
+}
