@@ -442,11 +442,9 @@ export default function Home() {
                                 <ChatComponent events={events} />
 
                                 <ChatHistory
-                                    conversations={conversations ?? []}
-                                    setConversationId={(id: string) => {
-                                        setConversationId(id);
-                                        setPrompt("");
-                                    }}
+                                    conversations={conversations || []}
+                                    conversationId={conversationId}
+                                    setConversationId={setConversationId}
                                 />
 
                                 <AgentInput
