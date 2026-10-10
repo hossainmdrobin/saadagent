@@ -1,6 +1,6 @@
 import { baseApi } from "../base-api";
 
-type Conversation = {
+export type Conversation = {
     id: string;
     project: string;
     title: string;
@@ -8,11 +8,14 @@ type Conversation = {
     updatedAt: string;
 };
 
+interface GetConversationsArg {
+    project: string;
+}
+
 export const conversationApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        getConversations: builder.query<Conversation[], { project: string }>({
+        getConversations: builder.query<Conversation[], GetConversationsArg>({
             query: ({ project }) => `/conversations?project=${encodeURIComponent(project)}`,
-            transformResponse: (response: { projects: Conversation[] }) => response.projects,
             providesTags: ["CONVERSATIONS"]
         }),
         createConversation: builder.mutation({

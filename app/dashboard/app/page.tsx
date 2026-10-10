@@ -16,6 +16,7 @@ import { ProcessesPanel } from "./components/processes-panel";
 import { useListProjectsQuery } from "@/store/features/projects-api";
 import { useOpenFileQuery, useSaveFileMutation } from "@/store/features/file-api";
 import { useCreateConversationMutation, useGetConversationsQuery } from "@/store/features/conversation-api";
+import { ChatHistory } from "./ChatHistory";
 
 export default function Home() {
     const [prompt, setPrompt] = useState("");
@@ -49,7 +50,7 @@ export default function Home() {
     const { data: openedFile } = useOpenFileQuery({ project: selectedProject, file: selectedFile || "" })
     const [saveFile, { isLoading: saving }] = useSaveFileMutation();
     const { data: conversations } = useGetConversationsQuery({ project: selectedProject })
-    console.log("CONVERSATION DATA:", data)
+    console.log("CONVERSATION DATA:", conversations)
     const [createConversation, { data: createConversationData }] = useCreateConversationMutation()
 
     useEffect(() => {
@@ -207,6 +208,7 @@ export default function Home() {
                                     New Chat
                                 </button>
                                 <ChatComponent events={events} />
+                                <ChatHistory conversations={conversations || []} />
                                 <AgentInput
                                     prompt={prompt}
                                     loading={loading}
