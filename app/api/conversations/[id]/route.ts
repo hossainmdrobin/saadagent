@@ -30,6 +30,7 @@ export async function GET(
     });
 
     const messages = state.values?.messages ?? [];
+    console.log(messages, "the messages")
 
     return NextResponse.json({
         conversationId: id,
@@ -41,4 +42,73 @@ export async function GET(
                     : "",
         })),
     });
+}
+
+
+export async function PATCH(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const { id } = await params;
+    const body = await request.json();
+    const project = body.project;
+    const title = body.title;
+
+    if (
+        typeof project !== "string" ||
+        !projectManager.exists(project) ||
+        !/^[a-zA-Z0-9_-]+$/.test(id) ||
+        typeof title !== "string" ||
+        !title.trim()
+    ) {
+        return NextResponse.json(
+            { error: "Invalid conversation data" },
+            { status: 400 }
+        );
+    }
+
+    const fs = await import("fs/promises");
+    const path = await import("path");
+
+    const filePath = path.join(
+        process.cwd(),
+        "data",
+        "conversations.json"
+    );
+
+    let conversations;
+
+    try {
+        conversations = JSON.parse(
+            await fs.readFile(filePath, "utf-8")
+        );
+    } catch {
+        return NextResponse.json(
+            { error: "Conversation metadata not found" },
+            { status: 404 }
+        );
+    }
+
+    const index = conversations.findIndex(
+        (chat: { id: string; project: string }) =>
+            chat.id === id && chat.project === project
+    );
+
+    if (index === -1) {
+        return NextResponse.json(
+            { error: "Conversation not found" },
+            { status: 404 }
+        );
+    }
+
+    conversations[index].title = title.trim().slice(0, 60);
+    conversations[index].updatedAt = new Date().toISOString();
+
+    await fs.writeFile(
+        filePath,
+        JSON.stringify(conversations, null, 2),
+        "utf-8"
+    );
+
+    return NextResponse.json(conversations[index]);
 }
