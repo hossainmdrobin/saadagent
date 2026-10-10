@@ -3,7 +3,7 @@ import { Dispatch, SetStateAction } from 'react';
 
 interface props {
     conversations: Conversation[],
-    setConversationId: Dispatch<SetStateAction<string>>;
+    setConversationId: (id:string)=>void;
 }
 
 export const ChatHistory = ({ conversations = [],setConversationId }: props) => {

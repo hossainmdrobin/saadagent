@@ -19,5 +19,12 @@
     "title": "New Chat",
     "createdAt": "2026-10-10T04:39:44.907Z",
     "updatedAt": "2026-10-10T04:39:44.907Z"
+  },
+  {
+    "id": "2edf9252-dbf6-42d7-87fb-820df40a5e7c",
+    "project": "demo",
+    "title": "What files does this folder have. tell me. Do...",
+    "createdAt": "2026-10-10T08:42:26.692Z",
+    "updatedAt": "2026-10-10T08:43:34.018Z"
   }
 ]

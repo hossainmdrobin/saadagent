@@ -30,7 +30,6 @@ export async function GET(
     });
 
     const messages = state.values?.messages ?? [];
-    console.log(messages, "the messages")
 
     return NextResponse.json({
         conversationId: id,
