@@ -430,10 +430,7 @@ export default function Home() {
                         <ProjectSelector
                             projects={data?.projects ?? []}
                             selectedProject={selectedProject}
-                            newProjectName={newProjectName}
                             onProjectChange={setSelectedProject}
-                            onNewProjectChange={setNewProjectName}
-                            onCreateProject={() => { }}
                         />
                     </div>
 
