@@ -1,3 +1,6 @@
+import { useCreateProjectMutation } from "@/store/features/projects-api";
+import { useState } from "react";
+
 interface Project {
   name: string;
   path: string;
@@ -6,20 +9,18 @@ interface Project {
 interface ProjectSelectorProps {
   projects: Project[];
   selectedProject: string;
-  newProjectName: string;
   onProjectChange: (value: string) => void;
-  onNewProjectChange: (value: string) => void;
-  onCreateProject: () => void;
 }
 
 export function ProjectSelector({
   projects,
   selectedProject,
-  newProjectName,
   onProjectChange,
-  onNewProjectChange,
-  onCreateProject,
 }: ProjectSelectorProps) {
+  const [newProjectName, setNewProjectName] = useState("")
+  const [createProject, { data }] = useCreateProjectMutation()
+  console.log(data)
+  console.log(newProjectName)
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--agent-border)] bg-[var(--agent-bg-elevated)] p-4 shadow-[var(--agent-shadow)]">
       <label
@@ -56,13 +57,14 @@ export function ProjectSelector({
 
       <input
         value={newProjectName}
-        onChange={(event) => onNewProjectChange(event.target.value)}
+        onChange={(event) => setNewProjectName(event.target.value)}
         placeholder="New project name"
         className="min-w-0 flex-1 rounded-lg border border-[var(--agent-border)] bg-[var(--agent-bg)] px-3 py-2 text-sm text-[var(--agent-text)] outline-none transition-colors focus:border-[var(--agent-primary)]"
       />
 
       <button
-        onClick={onCreateProject}
+        // disabled={newProjectName ? true : false}
+        onClick={() =>newProjectName && createProject({ name: newProjectName })}
         className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[var(--agent-primary)] to-[var(--agent-accent)] px-4 py-2 text-sm font-semibold text-white shadow-lg transition-opacity hover:opacity-90"
       >
         <svg
