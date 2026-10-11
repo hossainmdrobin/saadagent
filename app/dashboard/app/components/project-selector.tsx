@@ -18,9 +18,7 @@ export function ProjectSelector({
   onProjectChange,
 }: ProjectSelectorProps) {
   const [newProjectName, setNewProjectName] = useState("")
-  const [createProject, { data }] = useCreateProjectMutation()
-  console.log(data)
-  console.log(newProjectName)
+  const [createProject, { data, error }] = useCreateProjectMutation()
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--agent-border)] bg-[var(--agent-bg-elevated)] p-4 shadow-[var(--agent-shadow)]">
       <label
@@ -64,7 +62,7 @@ export function ProjectSelector({
 
       <button
         // disabled={newProjectName ? true : false}
-        onClick={() =>newProjectName && createProject({ name: newProjectName })}
+        onClick={() => newProjectName && createProject({ name: newProjectName })}
         className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[var(--agent-primary)] to-[var(--agent-accent)] px-4 py-2 text-sm font-semibold text-white shadow-lg transition-opacity hover:opacity-90"
       >
         <svg
@@ -81,6 +79,7 @@ export function ProjectSelector({
         </svg>
         Create Project
       </button>
+      <div className={` w-100 fixed rounded flex items-center p-3 right-3 bottom-3 h-12 bg-${error? 'red-300': 'green-300'} bg-green-500`}>{error?error.message:"success"}</div>
     </div>
   );
 }

@@ -65,7 +65,6 @@ export default function Home() {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const [selectedProject, setSelectedProject] = useState("demo");
-    const [newProjectName, setNewProjectName] = useState("");
 
     const selectedFileRef = useRef<string | null>(null);
 
